@@ -1,0 +1,5363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LibSpace | Smart Library Seating & Study Space Hub</title>
+  <meta name="description" content="Intelligent library seat reservation, study rooms, digital QR passes, live occupancy stats, and smart booking management.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --card-muted: #f1f5f9;
+      --ink: #0f172a;
+      --ink-muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --primary-border: #c7d2fe;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --success-light: #ecfdf5;
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+      --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 20px 35px -10px rgba(15, 23, 42, 0.12);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body.dark {
+      --bg: #090d16;
+      --card: #111827;
+      --card-muted: #1e293b;
+      --ink: #f8fafc;
+      --ink-muted: #94a3b8;
+      --border: #243049;
+      --primary: #6366f1;
+      --primary-hover: #818cf8;
+      --primary-light: #1e1b4b;
+      --primary-border: #3730a3;
+      --success-light: #064e3b;
+      --warning-light: #78350f;
+      --danger-light: #7f1d1d;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.6);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14.5px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: none; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Layout */
+    .app { display: flex; min-height: 100vh; }
+    
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 12px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      color: white;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      font-weight: 800;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+    .brand-text { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand-text span { color: var(--primary); }
+
+    .nav-list { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      color: var(--ink-muted);
+      font-weight: 600;
+      font-size: 14px;
+      transition: var(--transition);
+      text-align: left;
+    }
+    .nav-item-left { display: flex; align-items: center; gap: 12px; }
+    .nav-item-left .icon { font-size: 16px; width: 22px; text-align: center; }
+    .nav-item:hover { background: var(--card-muted); color: var(--ink); }
+    .nav-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+      box-shadow: inset 3px 0 0 var(--primary);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--card-muted);
+      color: var(--ink-muted);
+    }
+    .badge.primary { background: var(--primary); color: white; }
+    .badge.success { background: var(--success); color: white; }
+    .badge.warning { background: var(--warning); color: white; }
+
+    /* Focus Audio Synthesizer Widget */
+    .focus-widget {
+      background: var(--card-muted);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 16px;
+    }
+    .focus-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--ink-muted); }
+    .focus-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+    }
+    .focus-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 8px; }
+    .focus-mode-btn {
+      padding: 5px 2px;
+      border-radius: 8px;
+      font-size: 10.5px;
+      font-weight: 600;
+      background: var(--card);
+      border: 1px solid var(--border);
+      text-align: center;
+      cursor: pointer;
+    }
+    .focus-mode-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); }
+
+    /* Main Container */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 24px 36px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+    .topbar h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    .topbar-subtitle { margin: 4px 0 0; color: var(--ink-muted); font-size: 14px; }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+    .action-icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--ink);
+      position: relative;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .action-icon-btn:hover { background: var(--card-muted); transform: translateY(-1px); }
+    .action-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--danger);
+      color: white;
+      border-radius: 10px;
+      padding: 1px 5px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    /* Active Session Countdown Ticker */
+    .live-session-banner {
+      display: none;
+      background: linear-gradient(135deg, #4338ca, #6366f1);
+      color: white;
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25);
+      animation: pulseGlow 4s infinite alternate;
+    }
+    .live-session-banner.active { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
+    @keyframes pulseGlow {
+      from { box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2); }
+      to { box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4); }
+    }
+    .live-session-left { display: flex; align-items: center; gap: 12px; }
+    .pulse-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .timer-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 18px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 4px 10px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Cards & Components */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    .card:hover { box-shadow: var(--shadow); }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .card-header h2, .card-header h3 { margin: 0; font-size: 18px; font-weight: 700; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--primary);
+      color: white;
+      border: 1px solid var(--primary);
+      border-radius: 11px;
+      padding: 9px 18px;
+      font-weight: 600;
+      font-size: 13.5px;
+      transition: var(--transition);
+    }
+    .btn:hover { background: var(--primary-hover); border-color: var(--primary-hover); transform: translateY(-1px); }
+    .btn.alt {
+      background: var(--card);
+      color: var(--ink);
+      border-color: var(--border);
+    }
+    .btn.alt:hover { background: var(--card-muted); border-color: var(--ink-muted); }
+    .btn.secondary {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary-border);
+    }
+    .btn.secondary:hover { background: var(--primary); color: white; }
+    .btn.success { background: var(--success); border-color: var(--success); color: white; }
+    .btn.danger { background: var(--danger); border-color: var(--danger); color: white; }
+    .btn.small { padding: 6px 12px; font-size: 12.5px; border-radius: 9px; }
+
+    /* Inputs, Selects & Form Controls */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12.5px; font-weight: 700; color: var(--ink-muted); }
+    input, select, textarea {
+      background: var(--card);
+      color: var(--ink);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px;
+      transition: var(--transition);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    /* Sections */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.25s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Hero */
+    .hero-banner {
+      background: linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #7c3aed 100%);
+      color: white;
+      border-radius: 20px;
+      padding: 32px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(79, 70, 229, 0.25);
+    }
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      right: -30px;
+      bottom: -40px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+    }
+    .hero-content h2 { font-size: 28px; font-weight: 800; margin: 0 0 8px; }
+    .hero-content p { color: #e0e7ff; margin: 0 0 20px; max-width: 540px; font-size: 15px; }
+
+    /* Dashboard Grids */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .stat-value { font-size: 26px; font-weight: 800; margin-top: 2px; }
+    .stat-label { font-size: 12.5px; color: var(--ink-muted); font-weight: 600; }
+
+    .two-col { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 20px; }
+
+    /* Live Occupancy Radar & Zone Metrics */
+    .radar-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .radar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+    .radar-item {
+      background: var(--card-muted);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .radar-label { font-size: 11.5px; color: var(--ink-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .radar-value { font-size: 17px; font-weight: 800; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+
+    /* Interactive Floor & Zone Selector */
+    .filter-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      padding: 16px 20px;
+      background: var(--card-muted);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 18px;
+    }
+    
+    /* Preset Time Slot Chips */
+    .preset-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 12px 0 16px;
+    }
+    .preset-title { font-size: 12px; font-weight: 700; color: var(--ink-muted); margin-right: 4px; }
+    .preset-chip {
+      padding: 6px 13px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--ink);
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .preset-chip:hover { border-color: var(--primary); color: var(--primary); }
+    .preset-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* Amenity Filter Pills */
+    .filter-chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .filter-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .filter-chip.active {
+      background: var(--primary-light);
+      border-color: var(--primary-border);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Desk Pods & Seat Layout */
+    .seat-plan {
+      background: var(--card-muted);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .pod-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+    .pod-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .pod-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .pod-seats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .seat-btn {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      background: var(--success-light);
+      border: 1.5px solid #a7f3d0;
+      color: #065f46;
+      font-weight: 700;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition);
+    }
+    body.dark .seat-btn {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+    .seat-btn:hover:not(:disabled) {
+      transform: scale(1.08);
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+      border-color: var(--success);
+    }
+    .seat-btn.occupied {
+      background: var(--danger-light);
+      border-color: #fca5a5;
+      color: #991b1b;
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+    body.dark .seat-btn.occupied {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+    .seat-btn.selected {
+      background: var(--primary) !important;
+      border-color: var(--primary) !important;
+      color: white !important;
+      transform: scale(1.1);
+      box-shadow: 0 6px 14px rgba(79, 70, 229, 0.4);
+    }
+    .seat-btn.mine {
+      background: var(--warning-light) !important;
+      border-color: #fde68a !important;
+      color: #b45309 !important;
+    }
+    body.dark .seat-btn.mine {
+      background: rgba(245, 158, 11, 0.2) !important;
+      border-color: rgba(245, 158, 11, 0.4) !important;
+      color: #fcd34d !important;
+    }
+    .seat-badge-icon { font-size: 9px; line-height: 1; }
+
+    /* Legend */
+    .legend-bar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding: 12px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .legend-box { width: 14px; height: 14px; border-radius: 4px; }
+
+    /* Selected Seat Drawer / Summary Bar */
+    .selected-seat-bar {
+      background: var(--card);
+      border: 1.5px solid var(--primary-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.08);
+    }
+
+    /* Study Rooms & Resources Cards */
+    .room-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .room-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+    }
+    .room-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .room-visual {
+      height: 120px;
+      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+      display: grid;
+      place-items: center;
+      font-size: 44px;
+    }
+    body.dark .room-visual {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    }
+    .room-body { padding: 18px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+
+    /* Tables */
+    .table-responsive { overflow-x: auto; width: 100%; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+    th {
+      padding: 12px 16px;
+      background: var(--card-muted);
+      color: var(--ink-muted);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: var(--card-muted); }
+
+    /* Search & Filter Bar for Bookings */
+    .search-filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+      max-width: 380px;
+    }
+    .search-input-wrap input { width: 100%; padding-left: 36px; }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-muted);
+      pointer-events: none;
+    }
+
+    /* Digital Pass Ticket Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      place-items: center;
+      padding: 20px;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .modal-overlay.show { display: grid; animation: fadeIn 0.2s ease-out; }
+    
+    .pass-modal {
+      background: var(--card);
+      border-radius: 24px;
+      width: min(100%, 480px);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+    }
+    .pass-ticket {
+      background: var(--card);
+      position: relative;
+    }
+    .pass-header {
+      background: linear-gradient(135deg, #3730a3, #4f46e5);
+      color: white;
+      padding: 22px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pass-brand { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .pass-body { padding: 24px; }
+    .pass-notch-row {
+      position: relative;
+      height: 24px;
+      background: var(--card);
+      display: flex;
+      align-items: center;
+    }
+    .pass-notch-row::before, .pass-notch-row::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: rgba(15, 23, 42, 0.7);
+      border-radius: 50%;
+      top: 0;
+    }
+    .pass-notch-row::before { left: -12px; }
+    .pass-notch-row::after { right: -12px; }
+    .pass-notch-line {
+      width: 100%;
+      border-top: 2px dashed var(--border);
+    }
+    .pass-qr-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      margin: 16px 0;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+    }
+    .pass-qr-wrap svg, .pass-qr-wrap img, .pass-qr-wrap canvas {
+      max-width: 180px;
+      height: auto;
+    }
+    .pass-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .pass-meta-item .meta-label { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--ink-muted); }
+    .pass-meta-item .meta-val { font-size: 14px; font-weight: 700; margin-top: 2px; }
+
+    /* Calendar Grid */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .cal-head { text-align: center; font-weight: 700; color: var(--ink-muted); font-size: 12px; padding: 6px; }
+    .cal-day {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      min-height: 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--card);
+      font-size: 12px;
+    }
+    .cal-day.active-day { border-color: var(--primary); background: var(--primary-light); }
+
+    /* Toasts */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 380px;
+      pointer-events: none;
+    }
+    .toast-item {
+      background: #0f172a;
+      color: white;
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      border-left: 4px solid var(--primary);
+      font-size: 13.5px;
+      font-weight: 500;
+      animation: slideIn 0.25s ease-out;
+      pointer-events: auto;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* Mobile Bottom Navigation */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 6px 12px;
+      z-index: 50;
+      justify-content: space-around;
+      box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+    }
+    .mobile-nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--ink-muted);
+      font-weight: 600;
+      padding: 6px 10px;
+    }
+    .mobile-nav-btn.active { color: var(--primary); font-weight: 700; }
+
+    
+    /* 2D Interactive Floor Plan Canvas */
+    .view-mode-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn-group {
+      display: inline-flex;
+      background: var(--card-muted);
+      padding: 3px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      gap: 2px;
+    }
+    .btn-group .btn { border-radius: 9px; padding: 6px 14px; }
+    .floor-canvas-wrap {
+      position: relative;
+      background: var(--card-muted);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
+    }
+    #floorCanvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      cursor: crosshair;
+      background: #fdfdfd;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+    }
+    body.dark #floorCanvas {
+      background: #0d131f;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .canvas-tooltip {
+      position: absolute;
+      display: none;
+      background: #0f172a;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      pointer-events: none;
+      z-index: 30;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      white-space: nowrap;
+      border-left: 3px solid var(--primary);
+    }
+
+    
+    .admin-chart-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .chart-bars-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 14px;
+      height: 160px;
+      padding-top: 20px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .chart-bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .chart-bar-fill {
+      width: 100%;
+      max-width: 44px;
+      background: linear-gradient(180deg, var(--primary) 0%, #818cf8 100%);
+      border-radius: 8px 8px 0 0;
+      transition: height 0.4s ease;
+      position: relative;
+    }
+    .chart-bar-fill:hover { background: var(--primary-hover); }
+    .chart-val-bubble {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+    .chart-day-label {
+      font-size: 11px;
+      color: var(--ink-muted);
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* Print Styles for Digital Pass */
+    @media print {
+      body * { visibility: hidden; }
+      #passModal, #passModal * { visibility: visible; }
+      #passModal { position: absolute; left: 0; top: 0; width: 100%; background: none; }
+      .pass-actions { display: none !important; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1080px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .pod-grid { grid-template-columns: 1fr; }
+      .room-grid { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .mobile-nav { display: flex; }
+      .main { padding: 18px 16px 85px; }
+      .room-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .radar-grid { grid-template-columns: repeat(2, 1fr); }
+      .topbar h1 { font-size: 22px; }
+      .hero-banner { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Desktop Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">▣</div>
+      <div class="brand-text">Lib<span>Space</span></div>
+    </div>
+    <nav class="nav-list" id="sidebarNav"></nav>
+
+    <!-- Focus Study Ambient Audio Synthesizer (Zero bandwidth Web Audio) -->
+    <div class="focus-widget">
+      <div class="focus-header">
+        <span>🎧 FOCUS SOUNDS</span>
+        <button class="focus-btn" id="focusPlayBtn" onclick="toggleFocusAudio()" title="Play/Pause focus ambience">▶</button>
+      </div>
+      <div class="focus-modes">
+        <button class="focus-mode-btn active" onclick="setFocusAudioMode('rain')">🌧️ Rain</button>
+        <button class="focus-mode-btn" onclick="setFocusAudioMode('library')">☕ Cafe</button>
+        <button class="focus-mode-btn" onclick="setFocusAudioMode('whitenoise')">🌊 White</button>
+      </div>
+      <div style="margin-top:8px; display:flex; align-items:center; gap:6px;">
+        <span style="font-size:10px; color:var(--ink-muted)">Vol</span>
+        <input type="range" id="focusVolume" min="0" max="1" step="0.05" value="0.3" oninput="setFocusVolume(this.value)" style="flex:1; height:4px; padding:0;">
+      </div>
+    </div>
+
+    <div style="margin-top:16px; padding:12px; background:var(--card-muted); border-radius:12px; font-size:11.5px; color:var(--ink-muted); line-height:1.5;">
+      🎓 <strong>Campus Library Portal</strong><br>
+      Smart Booking & Live Seating
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p class="topbar-subtitle" id="pageSubtitle">Find your study space and stay focused.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="action-icon-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">◐</button>
+        <button class="action-icon-btn" onclick="showPage('notifications')" title="Notifications">
+          🔔<span class="action-badge" id="bellBadge" style="display:none">0</span>
+        </button>
+        <button class="btn secondary small" onclick="showPage('profile')" id="userPill">
+          👤 <span id="navUserName">Student</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Live Active Session Banner with Ticking Countdown -->
+    <div id="liveSessionBanner" class="live-session-banner">
+      <div class="live-session-left">
+        <div class="pulse-dot"></div>
+        <div>
+          <div style="font-size:12px; opacity:0.9; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Active Study Session</div>
+          <div style="font-size:16px; font-weight:800;" id="liveSessionItem">Seat F1-Q-05</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div>
+          <span style="font-size:11px; opacity:0.85;">TIME REMAINING: </span>
+          <span class="timer-display" id="liveCountdown">00:00:00</span>
+        </div>
+        <button class="btn alt small" onclick="openActivePass()">🎫 View Pass</button>
+        <button class="btn small" style="background:#10b981; border-color:#10b981;" onclick="extendActiveBooking()">⏱️ +30m Extend</button>
+        <button class="btn danger small" onclick="endActiveBookingEarly()">Check Out</button>
+      </div>
+    </div>
+
+    <!-- 1. DASHBOARD -->
+    <section id="dashboard" class="section active">
+      <div class="hero-banner">
+        <div class="hero-content">
+          <h2>Find your ideal study spot 👋</h2>
+          <p>Reserve high-speed workstations, quiet reading desks, or collaborative rooms in real-time with instant digital entry passes.</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <button class="btn" style="background:white; color:#4338ca; border:0;" onclick="showPage('seats')">Reserve a Seat →</button>
+            <button class="btn alt" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.3);" onclick="showPage('rooms')">Group Rooms</button>
+          </div>
+        </div>
+        <div style="font-size:75px; user-select:none; filter:drop-shadow(0 10px 15px rgba(0,0,0,0.2));">📚</div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="stats-grid" id="dashboardStats"></div>
+
+      <!-- Two Column Layout: Upcoming Bookings & Floor Overview -->
+      
+      <!-- Admin 7-Day Analytics Chart -->
+      <div class="admin-chart-box">
+        <div class="card-header">
+          <div>
+            <h3>Weekly Reservation Analytics</h3>
+            <p style="margin:2px 0 0; font-size:12.5px; color:var(--ink-muted);">Daily booking volume trends (Last 7 Days)</p>
+          </div>
+          <span class="badge primary">Real-time Insights</span>
+        </div>
+        <div class="chart-bars-wrap" id="adminChartBars"></div>
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink-muted);">
+          <span>Past 7 Days Traffic</span>
+          <span>Peak Capacity: 120 Desks</span>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <h3>My Active & Upcoming Reservations</h3>
+            <button class="btn alt small" onclick="showPage('bookings')">View all</button>
+          </div>
+          <div id="dashboardUpcoming" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Campus Floor Radar</h3>
+            <span class="badge primary">Live</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px;" id="dashboardFloorRadar"></div>
+          <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12.5px; color:var(--ink-muted);">Looking for quietest desk?</span>
+            <button class="btn secondary small" onclick="smartFindSeat('Quiet')">⚡ Auto-Find Spot</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. SEATS (Interactive Seat Selection & Live Floor Radar) -->
+    <section id="seats" class="section">
+      <!-- Live Occupancy Radar for Selected Floor & Zone -->
+      <div class="radar-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h3 style="margin:0; font-size:17px; font-weight:800;" id="radarFloorTitle">Floor 1 · Quiet Reading Zone</h3>
+            <p style="margin:2px 0 0; font-size:12.5px; color:var(--ink-muted);" id="radarOccupancyDesc">Real-time seat availability & amenities</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn secondary small" onclick="smartRecommendBestSeat()">⚡ Recommend Best Seat</button>
+          </div>
+        </div>
+
+        <div class="radar-grid">
+          <div class="radar-item">
+            <div class="radar-label">Seat Availability</div>
+            <div class="radar-value" id="radarSeatsCount">-- / 40 Free</div>
+          </div>
+          <div class="radar-item">
+            <div class="radar-label">Ambient Noise</div>
+            <div class="radar-value" id="radarNoiseLevel">🟢 26 dB · Quiet</div>
+          </div>
+          <div class="radar-item">
+            <div class="radar-label">⚡ Power Outlets</div>
+            <div class="radar-value" id="radarPowerCount">-- Available</div>
+          </div>
+          <div class="radar-item">
+            <div class="radar-label">🪟 Window Desks</div>
+            <div class="radar-value" id="radarWindowCount">-- Available</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Filter Panel -->
+      <div class="filter-panel">
+        <div class="form-group">
+          <label>Floor</label>
+          <select id="seatFloor" onchange="onSeatControlsChange()">
+            <option value="1">Floor 1 · Main Quiet Zone</option>
+            <option value="2">Floor 2 · Tech & Collaborative</option>
+            <option value="3">Floor 3 · Silent Study Suites</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Study Zone</label>
+          <select id="seatZone" onchange="onSeatControlsChange()">
+            <option value="Quiet">Quiet Zone (Strict Silence)</option>
+            <option value="Collaborative">Collaborative Zone (Discussion)</option>
+            <option value="Computer">Computer Zone (Workstations)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="seatDate" onchange="onSeatControlsChange()">
+        </div>
+        <div class="form-group">
+          <label>Start Time</label>
+          <input type="time" id="seatStart" value="10:00" onchange="onSeatTimeChange()">
+        </div>
+        <div class="form-group">
+          <label>End Time</label>
+          <input type="time" id="seatEnd" value="12:00" onchange="onSeatTimeChange()">
+        </div>
+        <div class="form-group" style="align-self:flex-end;">
+          <div id="slotDurationBadge" class="badge primary" style="padding:8px 12px; font-size:12px;">Duration: 2 hrs</div>
+        </div>
+      </div>
+
+      <!-- Quick Preset Time Slot Chips -->
+      <div class="preset-container">
+        <span class="preset-title">QUICK TIME PRESETS:</span>
+        <button class="preset-chip" onclick="applyTimePreset('now1')">⚡ Next 1 Hr</button>
+        <button class="preset-chip" onclick="applyTimePreset('now2')">⚡ Next 2 Hrs</button>
+        <button class="preset-chip" onclick="applyTimePreset('morning')">🌅 Morning (09:00 - 12:00)</button>
+        <button class="preset-chip" onclick="applyTimePreset('afternoon')">☀️ Afternoon (13:00 - 16:00)</button>
+        <button class="preset-chip" onclick="applyTimePreset('evening')">🌙 Evening (17:00 - 20:00)</button>
+      </div>
+
+      <!-- Search & Amenity Filters -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+        <div class="filter-chips">
+          <span style="font-size:12px; font-weight:700; color:var(--ink-muted)">AMENITY:</span>
+          <button class="filter-chip active" data-feature="all" onclick="setFeatureFilter('all', this)">All Desks</button>
+          <button class="filter-chip" data-feature="power" onclick="setFeatureFilter('power', this)">⚡ Power Socket</button>
+          <button class="filter-chip" data-feature="window" onclick="setFeatureFilter('window', this)">🪟 Window View</button>
+          <button class="filter-chip" data-feature="accessible" onclick="setFeatureFilter('accessible', this)">♿ Accessible</button>
+          <button class="filter-chip" data-feature="computer" onclick="setFeatureFilter('computer', this)">🖥️ Workstation</button>
+        </div>
+
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="seatSearch" placeholder="Jump to seat (e.g. 05, 18)..." oninput="drawSeats()">
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend-bar">
+        <div class="legend-item"><span class="legend-box" style="background:#10b981;"></span> Available</div>
+        <div class="legend-item"><span class="legend-box" style="background:#ef4444;"></span> Occupied / Booked</div>
+        <div class="legend-item"><span class="legend-box" style="background:#4f46e5;"></span> Selected</div>
+        <div class="legend-item"><span class="legend-box" style="background:#f59e0b;"></span> Your Active Booking</div>
+        <div class="legend-item" style="margin-left:auto; font-size:11.5px; color:var(--ink-muted);">
+          <span>Icons: ⚡ Power · 🪟 Window · ♿ Accessible · 🖥️ PC</span>
+        </div>
+      </div>
+
+      
+      <!-- View Switcher (2D Interactive Map vs Pods Grid) -->
+      <div class="view-mode-bar">
+        <div class="btn-group">
+          <button class="btn small" id="viewModeMapBtn" onclick="setFloorViewMode('map')">🗺️ 2D Interactive Map</button>
+          <button class="btn small alt" id="viewModeGridBtn" onclick="setFloorViewMode('grid')">▦ Desk Pods Grid</button>
+        </div>
+        <div class="map-controls" id="mapControls" style="display:flex; gap:6px;">
+          <button class="btn alt small" onclick="zoomMap(0.1)" title="Zoom in">🔍 +</button>
+          <button class="btn alt small" onclick="zoomMap(-0.1)" title="Zoom out">🔍 −</button>
+          <button class="btn alt small" onclick="resetMapZoom()" title="Reset view">↺ Reset</button>
+        </div>
+      </div>
+
+      <!-- 2D Canvas Floor Plan Container -->
+      <div class="floor-canvas-wrap" id="floorCanvasWrap">
+        <canvas id="floorCanvas" width="900" height="520"></canvas>
+        <div id="canvasTooltip" class="canvas-tooltip"></div>
+      </div>
+
+      <!-- Visual Floor Plan with Study Pods -->
+      <div class="seat-plan">
+        <div class="pod-grid" id="seatPodGrid"></div>
+      </div>
+
+      <!-- Selected Seat Bottom Confirmation Drawer -->
+      <div class="selected-seat-bar" id="seatDetailBar">
+        <div>
+          <div style="font-size:12px; font-weight:700; color:var(--ink-muted); text-transform:uppercase;">Selected Workspace</div>
+          <div style="font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px;" id="selectedSeatTitle">
+            Select an available desk above
+          </div>
+          <div style="font-size:12.5px; color:var(--ink-muted); margin-top:2px;" id="selectedSeatMeta">
+            Click on any green desk in Pod A, B, C, or D
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn alt" id="favSeatBtn" onclick="favoriteSelectedSeat()" disabled>♡ Favorite</button>
+          <button class="btn" id="confirmSeatBtn" onclick="reserveSelectedSeat()" disabled>Confirm & Generate Pass →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. STUDY ROOMS -->
+    <section id="rooms" class="section">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div>
+            <h3>Collaborative & Quiet Study Rooms</h3>
+            <p style="margin:2px 0 0; color:var(--ink-muted); font-size:13px;">Equipped with smart displays, whiteboards, and video conferencing</p>
+          </div>
+        </div>
+        <div class="filter-panel" style="margin-bottom:0;">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="roomDate" onchange="renderRooms()">
+          </div>
+          <div class="form-group">
+            <label>Start</label>
+            <input type="time" id="roomStart" value="10:00" onchange="renderRooms()">
+          </div>
+          <div class="form-group">
+            <label>End</label>
+            <input type="time" id="roomEnd" value="11:30" onchange="renderRooms()">
+          </div>
+          <div class="search-input-wrap" style="align-self:flex-end;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="roomSearch" placeholder="Search room name or equipment..." oninput="renderRooms()">
+          </div>
+        </div>
+      </div>
+      <div class="room-grid" id="roomCardGrid"></div>
+    </section>
+
+    <!-- 4. RESOURCES & HARDWARE -->
+    <section id="resources" class="section">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div>
+            <h3>Library Hardware & Digital Resources</h3>
+            <p style="margin:2px 0 0; color:var(--ink-muted); font-size:13px;">Reserve campus computers, multimedia tablets, and charging docks</p>
+          </div>
+        </div>
+        <div class="filter-panel" style="margin-bottom:0;">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="resourceDate" onchange="renderResources()">
+          </div>
+          <div class="form-group">
+            <label>Start</label>
+            <input type="time" id="resourceStart" value="10:00" onchange="renderResources()">
+          </div>
+          <div class="form-group">
+            <label>End</label>
+            <input type="time" id="resourceEnd" value="12:00" onchange="renderResources()">
+          </div>
+          <div class="search-input-wrap" style="align-self:flex-end;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="resourceSearch" placeholder="Search resources..." oninput="renderResources()">
+          </div>
+        </div>
+      </div>
+      <div class="room-grid" id="resourceCardGrid"></div>
+    </section>
+
+    <!-- 5. MY BOOKINGS -->
+    <section id="bookings" class="section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>My Study Reservations</h3>
+            <p style="margin:2px 0 0; color:var(--ink-muted); font-size:13px;">Manage passes, check-in, extend, or export your schedule</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn alt small" onclick="exportBookingsICS()">📅 Export Calendar (.ics)</button>
+            <button class="btn alt small" onclick="downloadCSV()">↓ Export CSV</button>
+          </div>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="search-filter-bar">
+          <div class="filter-chips" style="margin-bottom:0;">
+            <button class="filter-chip active" onclick="setBookingStatusFilter('all', this)">All (<span id="bCountAll">0</span>)</button>
+            <button class="filter-chip" onclick="setBookingStatusFilter('active', this)">Active / Upcoming (<span id="bCountActive">0</span>)</button>
+            <button class="filter-chip" onclick="setBookingStatusFilter('completed', this)">Completed (<span id="bCountCompleted">0</span>)</button>
+            <button class="filter-chip" onclick="setBookingStatusFilter('cancelled', this)">Cancelled (<span id="bCountCancelled">0</span>)</button>
+          </div>
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="bookingSearchInput" placeholder="Search by ID, desk, room, or date..." oninput="renderBookingsTable()">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Reservation Item</th>
+                <th>Date</th>
+                <th>Time Window</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bookingsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. CALENDAR VIEW -->
+    <section id="calendar" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h3>Monthly Booking Schedule</h3>
+          <input type="month" id="calendarMonth" onchange="renderCalendar()">
+        </div>
+        <div class="calendar-grid" id="calendarGridWrap"></div>
+      </div>
+    </section>
+
+    <!-- 7. FAVORITES -->
+    <section id="favorites" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h3>Saved Favorite Desks</h3>
+          <span class="badge primary" id="favCountBadge">0 saved</span>
+        </div>
+        <div id="favoritesList" style="display:grid; gap:12px;"></div>
+      </div>
+    </section>
+
+    <!-- 8. NOTIFICATIONS -->
+    <section id="notifications" class="section">
+      <div class="card">
+        <div class="card-header">
+          <h3>System & Reservation Notices</h3>
+          <button class="btn alt small" onclick="clearAllNotifications()">Clear All</button>
+        </div>
+        <div id="notificationsList" style="display:grid; gap:10px;"></div>
+      </div>
+    </section>
+
+    <!-- 9. HELP & SUPPORT -->
+    <section id="support" class="section">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <h3>Report Facility Issue</h3>
+          </div>
+          <form id="feedbackForm" style="display:flex; flex-direction:column; gap:14px;">
+            <div class="form-group">
+              <label>Issue Category</label>
+              <select id="issueType">
+                <option>Broken Desk / Seat</option>
+                <option>Power Socket Not Working</option>
+                <option>Wi-Fi / Internet Disconnected</option>
+                <option>Room Display / Projector Fault</option>
+                <option>General Library Feedback</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Location / Details</label>
+              <textarea id="issueDetails" rows="4" placeholder="Specify desk ID, room number, or describe the problem..." required></textarea>
+            </div>
+            <button class="btn" type="submit">Submit Problem Report</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Frequently Asked Questions</h3>
+          </div>
+          <details style="padding:10px 0; border-bottom:1px solid var(--border);">
+            <summary style="font-weight:700; cursor:pointer;">How do I check in with my QR Pass?</summary>
+            <p style="font-size:13px; color:var(--ink-muted); margin:8px 0 0;">
+              Open your Digital Pass on your phone or printout. When you arrive at your seat within 1 hour of start time, click "Check In" or scan at the kiosk.
+            </p>
+          </details>
+          <details style="padding:10px 0; border-bottom:1px solid var(--border);">
+            <summary style="font-weight:700; cursor:pointer;">Can I extend my reservation?</summary>
+            <p style="font-size:13px; color:var(--ink-muted); margin:8px 0 0;">
+              Yes! If the desk is not reserved by another student right after your slot, you can click "⏱️ +30m Extend" from your active banner or bookings list.
+            </p>
+          </details>
+          <details style="padding:10px 0;">
+            <summary style="font-weight:700; cursor:pointer;">What are the quiet zone guidelines?</summary>
+            <p style="font-size:13px; color:var(--ink-muted); margin:8px 0 0;">
+              Floor 1 Quiet Zone requires silent study and headphones for audio. Group discussions are welcomed on Floor 2.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. PROFILE & SETTINGS -->
+    <section id="profile" class="section">
+      <div class="card" style="max-width:640px;">
+        <div class="card-header">
+          <h3>Student Profile & Role</h3>
+        </div>
+        <form id="profileForm" style="display:flex; flex-direction:column; gap:16px;">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="profileName" required>
+          </div>
+          <div class="form-group">
+            <label>Registration / Student ID</label>
+            <input type="text" id="profileReg" required>
+          </div>
+          <div class="form-group">
+            <label>University Email</label>
+            <input type="email" id="profileEmail" required>
+          </div>
+          <div class="form-group">
+            <label>Demo Role Permission</label>
+            <select id="profileRole" onchange="switchDemoRole()">
+              <option value="student">Student User</option>
+              <option value="admin">Library Administrator (Demo)</option>
+            </select>
+          </div>
+          <button class="btn" type="submit">Save Profile Changes</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 11. ADMIN DASHBOARD -->
+    <section id="admin" class="section">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <h3>Library Management Administration</h3>
+          <span class="badge primary">Demo Admin</span>
+        </div>
+        <div class="stats-grid" id="adminStatsGrid"></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <h3>Library Operating Settings</h3>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div class="form-group">
+              <label>Library Opening Time</label>
+              <input type="time" id="adminOpenTime" value="08:00">
+            </div>
+            <div class="form-group">
+              <label>Library Closing Time</label>
+              <input type="time" id="adminCloseTime" value="22:00">
+            </div>
+            <div class="form-group">
+              <label>Maximum Allowed Booking Hours</label>
+              <input type="number" id="adminMaxHours" min="1" max="12" value="4">
+            </div>
+            <button class="btn" onclick="saveAdminSettings()">Save Operating Rules</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Recent Maintenance Reports</h3>
+          </div>
+          <div id="adminReportsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+          <h3>Master Booking Registry (Admin Override)</h3>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Item / Space</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Admin Action</th>
+              </tr>
+            </thead>
+            <tbody id="adminBookingsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="margin-top:40px; padding:20px 0; border-top:1px solid var(--border); text-align:center; font-size:12px; color:var(--ink-muted);">
+      LibSpace Smart Seating · CSE326 CA1 Engineering Project Demo · LocalStorage Persistent Engine
+    </footer>
+  </main>
+</div>
+
+<!-- Mobile Navigation Bar -->
+<nav class="mobile-nav">
+  <button class="mobile-nav-btn active" onclick="showPage('dashboard')">⌂<br>Home</button>
+  <button class="mobile-nav-btn" onclick="showPage('seats')">▦<br>Seats</button>
+  <button class="mobile-nav-btn" onclick="showPage('rooms')">🚪<br>Rooms</button>
+  <button class="mobile-nav-btn" onclick="showPage('bookings')">▤<br>Bookings</button>
+  <button class="mobile-nav-btn" onclick="showPage('profile')">◉<br>Profile</button>
+</nav>
+
+<!-- Digital Pass Modal with Visual QR Code Generator -->
+<div id="passModal" class="modal-overlay" onclick="if(event.target===this)closePassModal()">
+  <div class="pass-modal">
+    <div class="pass-ticket" id="passTicketElement">
+      <div class="pass-header">
+        <div class="pass-brand">
+          <span>▣</span> LibSpace Pass
+        </div>
+        <span class="badge" id="modalPassStatusBadge" style="background:white; color:#4338ca; font-weight:800;">ACTIVE</span>
+      </div>
+
+      <div class="pass-body">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--ink-muted);">PASS HOLDER</div>
+            <div style="font-size:17px; font-weight:800;" id="modalPassUser">Student</div>
+            <div style="font-size:12px; color:var(--ink-muted);" id="modalPassReg">CSE326-DEMO</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:var(--ink-muted);">SPACE RESERVED</div>
+            <div style="font-size:18px; font-weight:800; color:var(--primary);" id="modalPassItem">F1-Q-05</div>
+            <div style="font-size:12px; font-weight:600;" id="modalPassType">Quiet Desk</div>
+          </div>
+        </div>
+
+        <div class="pass-qr-wrap">
+          <div id="modalQrCodeContainer"></div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748b; margin-top:8px; letter-spacing:1px;" id="modalPassIdDisplay">
+            LS-XXXXXX
+          </div>
+        </div>
+
+        <div class="pass-meta-grid">
+          <div class="pass-meta-item">
+            <div class="meta-label">DATE</div>
+            <div class="meta-val" id="modalPassDate">2026-10-19</div>
+          </div>
+          <div class="pass-meta-item">
+            <div class="meta-label">TIME SLOT</div>
+            <div class="meta-val" id="modalPassTime">10:00 - 12:00</div>
+          </div>
+          <div class="pass-meta-item">
+            <div class="meta-label">FACILITY</div>
+            <div class="meta-val" id="modalPassLocation">Main Library Floor 1</div>
+          </div>
+          <div class="pass-meta-item">
+            <div class="meta-label">CHECK-IN STATUS</div>
+            <div class="meta-val" id="modalPassCheckin">Pending at Gate</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pass-notch-row">
+        <div class="pass-notch-line"></div>
+      </div>
+
+      <div class="pass-body" style="padding-top:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--ink-muted);">
+          <span>🛡️ Verified Digital Booking Pass</span>
+          <span>100% Offline Scannable</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="pass-actions" style="padding:16px 24px; background:var(--card-muted); border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn alt small" onclick="downloadPassPNG()">📥 Download PNG</button>
+        <button class="btn alt small" onclick="copyPassCode()">📋 Copy ID</button>
+        <button class="btn alt small" onclick="printPassTicket()">🖨️ Print</button>
+        <button class="btn alt small" onclick="downloadPassICS()">📅 Add to Calendar</button>
+      </div>
+      <button class="btn small" onclick="closePassModal()">Close Pass</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- QR Code Library Inlined -->
+<script>
+
+var qrcode = function() {
+  var qrcode = function(typeNumber, errorCorrectionLevel) {
+    var PAD0 = 0xEC;
+    var PAD1 = 0x11;
+    var _typeNumber = typeNumber;
+    var _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
+    var _modules = null;
+    var _moduleCount = 0;
+    var _dataCache = null;
+    var _dataList = [];
+    var _this = {};
+    var makeImpl = function(test, maskPattern) {
+      _moduleCount = _typeNumber * 4 + 17;
+      _modules = function(moduleCount) {
+        var modules = new Array(moduleCount);
+        for (var row = 0; row < moduleCount; row += 1) {
+          modules[row] = new Array(moduleCount);
+          for (var col = 0; col < moduleCount; col += 1) {
+            modules[row][col] = null;
+          }
+        }
+        return modules;
+      }(_moduleCount);
+      setupPositionProbePattern(0, 0);
+      setupPositionProbePattern(_moduleCount - 7, 0);
+      setupPositionProbePattern(0, _moduleCount - 7);
+      setupPositionAdjustPattern();
+      setupTimingPattern();
+      setupTypeInfo(test, maskPattern);
+      if (_typeNumber >= 7) {
+        setupTypeNumber(test);
+      }
+      if (_dataCache == null) {
+        _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
+      }
+      mapData(_dataCache, maskPattern);
+    };
+    var setupPositionProbePattern = function(row, col) {
+      for (var r = -1; r <= 7; r += 1) {
+        if (row + r <= -1 || _moduleCount <= row + r) continue;
+        for (var c = -1; c <= 7; c += 1) {
+          if (col + c <= -1 || _moduleCount <= col + c) continue;
+          if ( (0 <= r && r <= 6 && (c == 0 || c == 6) )
+              || (0 <= c && c <= 6 && (r == 0 || r == 6) )
+              || (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+            _modules[row + r][col + c] = true;
+          } else {
+            _modules[row + r][col + c] = false;
+          }
+        }
+      }
+    };
+    var getBestMaskPattern = function() {
+      var minLostPoint = 0;
+      var pattern = 0;
+      for (var i = 0; i < 8; i += 1) {
+        makeImpl(true, i);
+        var lostPoint = QRUtil.getLostPoint(_this);
+        if (i == 0 || minLostPoint > lostPoint) {
+          minLostPoint = lostPoint;
+          pattern = i;
+        }
+      }
+      return pattern;
+    };
+    var setupTimingPattern = function() {
+      for (var r = 8; r < _moduleCount - 8; r += 1) {
+        if (_modules[r][6] != null) {
+          continue;
+        }
+        _modules[r][6] = (r % 2 == 0);
+      }
+      for (var c = 8; c < _moduleCount - 8; c += 1) {
+        if (_modules[6][c] != null) {
+          continue;
+        }
+        _modules[6][c] = (c % 2 == 0);
+      }
+    };
+    var setupPositionAdjustPattern = function() {
+      var pos = QRUtil.getPatternPosition(_typeNumber);
+      for (var i = 0; i < pos.length; i += 1) {
+        for (var j = 0; j < pos.length; j += 1) {
+          var row = pos[i];
+          var col = pos[j];
+          if (_modules[row][col] != null) {
+            continue;
+          }
+          for (var r = -2; r <= 2; r += 1) {
+            for (var c = -2; c <= 2; c += 1) {
+              if (r == -2 || r == 2 || c == -2 || c == 2
+                  || (r == 0 && c == 0) ) {
+                _modules[row + r][col + c] = true;
+              } else {
+                _modules[row + r][col + c] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    var setupTypeNumber = function(test) {
+      var bits = QRUtil.getBCHTypeNumber(_typeNumber);
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
+      }
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
+      }
+    };
+    var setupTypeInfo = function(test, maskPattern) {
+      var data = (_errorCorrectionLevel << 3) | maskPattern;
+      var bits = QRUtil.getBCHTypeInfo(data);
+      for (var i = 0; i < 15; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        if (i < 6) {
+          _modules[i][8] = mod;
+        } else if (i < 8) {
+          _modules[i + 1][8] = mod;
+        } else {
+          _modules[_moduleCount - 15 + i][8] = mod;
+        }
+      }
+      for (var i = 0; i < 15; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        if (i < 8) {
+          _modules[8][_moduleCount - i - 1] = mod;
+        } else if (i < 9) {
+          _modules[8][15 - i - 1 + 1] = mod;
+        } else {
+          _modules[8][15 - i - 1] = mod;
+        }
+      }
+      _modules[_moduleCount - 8][8] = (!test);
+    };
+    var mapData = function(data, maskPattern) {
+      var inc = -1;
+      var row = _moduleCount - 1;
+      var bitIndex = 7;
+      var byteIndex = 0;
+      var maskFunc = QRUtil.getMaskFunction(maskPattern);
+      for (var col = _moduleCount - 1; col > 0; col -= 2) {
+        if (col == 6) col -= 1;
+        while (true) {
+          for (var c = 0; c < 2; c += 1) {
+            if (_modules[row][col - c] == null) {
+              var dark = false;
+              if (byteIndex < data.length) {
+                dark = ( ( (data[byteIndex] >>> bitIndex) & 1) == 1);
+              }
+              var mask = maskFunc(row, col - c);
+              if (mask) {
+                dark = !dark;
+              }
+              _modules[row][col - c] = dark;
+              bitIndex -= 1;
+              if (bitIndex == -1) {
+                byteIndex += 1;
+                bitIndex = 7;
+              }
+            }
+          }
+          row += inc;
+          if (row < 0 || _moduleCount <= row) {
+            row -= inc;
+            inc = -inc;
+            break;
+          }
+        }
+      }
+    };
+    var createBytes = function(buffer, rsBlocks) {
+      var offset = 0;
+      var maxDcCount = 0;
+      var maxEcCount = 0;
+      var dcdata = new Array(rsBlocks.length);
+      var ecdata = new Array(rsBlocks.length);
+      for (var r = 0; r < rsBlocks.length; r += 1) {
+        var dcCount = rsBlocks[r].dataCount;
+        var ecCount = rsBlocks[r].totalCount - dcCount;
+        maxDcCount = Math.max(maxDcCount, dcCount);
+        maxEcCount = Math.max(maxEcCount, ecCount);
+        dcdata[r] = new Array(dcCount);
+        for (var i = 0; i < dcdata[r].length; i += 1) {
+          dcdata[r][i] = 0xff & buffer.getBuffer()[i + offset];
+        }
+        offset += dcCount;
+        var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+        var rawPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1);
+        var modPoly = rawPoly.mod(rsPoly);
+        ecdata[r] = new Array(rsPoly.getLength() - 1);
+        for (var i = 0; i < ecdata[r].length; i += 1) {
+          var modIndex = i + modPoly.getLength() - ecdata[r].length;
+          ecdata[r][i] = (modIndex >= 0)? modPoly.getAt(modIndex) : 0;
+        }
+      }
+      var totalCodeCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalCodeCount += rsBlocks[i].totalCount;
+      }
+      var data = new Array(totalCodeCount);
+      var index = 0;
+      for (var i = 0; i < maxDcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < dcdata[r].length) {
+            data[index] = dcdata[r][i];
+            index += 1;
+          }
+        }
+      }
+      for (var i = 0; i < maxEcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < ecdata[r].length) {
+            data[index] = ecdata[r][i];
+            index += 1;
+          }
+        }
+      }
+      return data;
+    };
+    var createData = function(typeNumber, errorCorrectionLevel, dataList) {
+      var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
+      var buffer = qrBitBuffer();
+      for (var i = 0; i < dataList.length; i += 1) {
+        var data = dataList[i];
+        buffer.put(data.getMode(), 4);
+        buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+        data.write(buffer);
+      }
+      var totalDataCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalDataCount += rsBlocks[i].dataCount;
+      }
+      if (buffer.getLengthInBits() > totalDataCount * 8) {
+        throw 'code length overflow. ('
+          + buffer.getLengthInBits()
+          + '>'
+          + totalDataCount * 8
+          + ')';
+      }
+      if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+        buffer.put(0, 4);
+      }
+      while (buffer.getLengthInBits() % 8 != 0) {
+        buffer.putBit(false);
+      }
+      while (true) {
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD0, 8);
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD1, 8);
+      }
+      return createBytes(buffer, rsBlocks);
+    };
+    _this.addData = function(data, mode) {
+      mode = mode || 'Byte';
+      var newData = null;
+      switch(mode) {
+      case 'Numeric' :
+        newData = qrNumber(data);
+        break;
+      case 'Alphanumeric' :
+        newData = qrAlphaNum(data);
+        break;
+      case 'Byte' :
+        newData = qr8BitByte(data);
+        break;
+      case 'Kanji' :
+        newData = qrKanji(data);
+        break;
+      default :
+        throw 'mode:' + mode;
+      }
+      _dataList.push(newData);
+      _dataCache = null;
+    };
+    _this.isDark = function(row, col) {
+      if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
+        throw row + ',' + col;
+      }
+      return _modules[row][col];
+    };
+    _this.getModuleCount = function() {
+      return _moduleCount;
+    };
+    _this.make = function() {
+      if (_typeNumber < 1) {
+        var typeNumber = 1;
+        for (; typeNumber < 40; typeNumber++) {
+          var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, _errorCorrectionLevel);
+          var buffer = qrBitBuffer();
+          for (var i = 0; i < _dataList.length; i++) {
+            var data = _dataList[i];
+            buffer.put(data.getMode(), 4);
+            buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+            data.write(buffer);
+          }
+          var totalDataCount = 0;
+          for (var i = 0; i < rsBlocks.length; i++) {
+            totalDataCount += rsBlocks[i].dataCount;
+          }
+          if (buffer.getLengthInBits() <= totalDataCount * 8) {
+            break;
+          }
+        }
+        _typeNumber = typeNumber;
+      }
+      makeImpl(false, getBestMaskPattern() );
+    };
+    _this.createTableTag = function(cellSize, margin) {
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+      var qrHtml = '';
+      qrHtml += '<table style="';
+      qrHtml += ' border-width: 0px; border-style: none;';
+      qrHtml += ' border-collapse: collapse;';
+      qrHtml += ' padding: 0px; margin: ' + margin + 'px;';
+      qrHtml += '">';
+      qrHtml += '<tbody>';
+      for (var r = 0; r < _this.getModuleCount(); r += 1) {
+        qrHtml += '<tr>';
+        for (var c = 0; c < _this.getModuleCount(); c += 1) {
+          qrHtml += '<td style="';
+          qrHtml += ' border-width: 0px; border-style: none;';
+          qrHtml += ' border-collapse: collapse;';
+          qrHtml += ' padding: 0px; margin: 0px;';
+          qrHtml += ' width: ' + cellSize + 'px;';
+          qrHtml += ' height: ' + cellSize + 'px;';
+          qrHtml += ' background-color: ';
+          qrHtml += _this.isDark(r, c)? '#000000' : '#ffffff';
+          qrHtml += ';';
+          qrHtml += '"/>';
+        }
+        qrHtml += '</tr>';
+      }
+      qrHtml += '</tbody>';
+      qrHtml += '</table>';
+      return qrHtml;
+    };
+    _this.createSvgTag = function(cellSize, margin, alt, title) {
+      var opts = {};
+      if (typeof arguments[0] == 'object') {
+        opts = arguments[0];
+        cellSize = opts.cellSize;
+        margin = opts.margin;
+        alt = opts.alt;
+        title = opts.title;
+      }
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+      alt = (typeof alt === 'string') ? {text: alt} : alt || {};
+      alt.text = alt.text || null;
+      alt.id = (alt.text) ? alt.id || 'qrcode-description' : null;
+      title = (typeof title === 'string') ? {text: title} : title || {};
+      title.text = title.text || null;
+      title.id = (title.text) ? title.id || 'qrcode-title' : null;
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var c, mc, r, mr, qrSvg='', rect;
+      rect = 'l' + cellSize + ',0 0,' + cellSize +
+        ' -' + cellSize + ',0 0,-' + cellSize + 'z ';
+      qrSvg += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
+      qrSvg += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : '';
+      qrSvg += ' viewBox="0 0 ' + size + ' ' + size + '" ';
+      qrSvg += ' preserveAspectRatio="xMinYMin meet"';
+      qrSvg += (title.text || alt.text) ? ' role="img" aria-labelledby="' +
+          escapeXml([title.id, alt.id].join(' ').trim() ) + '"' : '';
+      qrSvg += '>';
+      qrSvg += (title.text) ? '<title id="' + escapeXml(title.id) + '">' +
+          escapeXml(title.text) + '</title>' : '';
+      qrSvg += (alt.text) ? '<description id="' + escapeXml(alt.id) + '">' +
+          escapeXml(alt.text) + '</description>' : '';
+      qrSvg += '<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>';
+      qrSvg += '<path d="';
+      for (r = 0; r < _this.getModuleCount(); r += 1) {
+        mr = r * cellSize + margin;
+        for (c = 0; c < _this.getModuleCount(); c += 1) {
+          if (_this.isDark(r, c) ) {
+            mc = c*cellSize+margin;
+            qrSvg += 'M' + mc + ',' + mr + rect;
+          }
+        }
+      }
+      qrSvg += '" stroke="transparent" fill="black"/>';
+      qrSvg += '</svg>';
+      return qrSvg;
+    };
+    _this.createDataURL = function(cellSize, margin) {
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+      return createDataURL(size, size, function(x, y) {
+        if (min <= x && x < max && min <= y && y < max) {
+          var c = Math.floor( (x - min) / cellSize);
+          var r = Math.floor( (y - min) / cellSize);
+          return _this.isDark(r, c)? 0 : 1;
+        } else {
+          return 1;
+        }
+      } );
+    };
+    _this.createImgTag = function(cellSize, margin, alt) {
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var img = '';
+      img += '<img';
+      img += '\u0020src="';
+      img += _this.createDataURL(cellSize, margin);
+      img += '"';
+      img += '\u0020width="';
+      img += size;
+      img += '"';
+      img += '\u0020height="';
+      img += size;
+      img += '"';
+      if (alt) {
+        img += '\u0020alt="';
+        img += escapeXml(alt);
+        img += '"';
+      }
+      img += '/>';
+      return img;
+    };
+    var escapeXml = function(s) {
+      var escaped = '';
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charAt(i);
+        switch(c) {
+        case '<': escaped += '&lt;'; break;
+        case '>': escaped += '&gt;'; break;
+        case '&': escaped += '&amp;'; break;
+        case '"': escaped += '&quot;'; break;
+        default : escaped += c; break;
+        }
+      }
+      return escaped;
+    };
+    var _createHalfASCII = function(margin) {
+      var cellSize = 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+      var y, x, r1, r2, p;
+      var blocks = {
+        '██': '█',
+        '█ ': '▀',
+        ' █': '▄',
+        '  ': ' '
+      };
+      var blocksLastLineNoMargin = {
+        '██': '▀',
+        '█ ': '▀',
+        ' █': ' ',
+        '  ': ' '
+      };
+      var ascii = '';
+      for (y = 0; y < size; y += 2) {
+        r1 = Math.floor((y - min) / cellSize);
+        r2 = Math.floor((y + 1 - min) / cellSize);
+        for (x = 0; x < size; x += 1) {
+          p = '█';
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) {
+            p = ' ';
+          }
+          if (min <= x && x < max && min <= y+1 && y+1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) {
+            p += ' ';
+          }
+          else {
+            p += '█';
+          }
+          ascii += (margin < 1 && y+1 >= max) ? blocksLastLineNoMargin[p] : blocks[p];
+        }
+        ascii += '\n';
+      }
+      if (size % 2 && margin > 0) {
+        return ascii.substring(0, ascii.length - size - 1) + Array(size+1).join('▀');
+      }
+      return ascii.substring(0, ascii.length-1);
+    };
+    _this.createASCII = function(cellSize, margin) {
+      cellSize = cellSize || 1;
+      if (cellSize < 2) {
+        return _createHalfASCII(margin);
+      }
+      cellSize -= 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+      var y, x, r, p;
+      var white = Array(cellSize+1).join('██');
+      var black = Array(cellSize+1).join('  ');
+      var ascii = '';
+      var line = '';
+      for (y = 0; y < size; y += 1) {
+        r = Math.floor( (y - min) / cellSize);
+        line = '';
+        for (x = 0; x < size; x += 1) {
+          p = 1;
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) {
+            p = 0;
+          }
+          line += p ? white : black;
+        }
+        for (r = 0; r < cellSize; r += 1) {
+          ascii += line + '\n';
+        }
+      }
+      return ascii.substring(0, ascii.length-1);
+    };
+    _this.renderTo2dContext = function(context, cellSize) {
+      cellSize = cellSize || 2;
+      var length = _this.getModuleCount();
+      for (var row = 0; row < length; row++) {
+        for (var col = 0; col < length; col++) {
+          context.fillStyle = _this.isDark(row, col) ? 'black' : 'white';
+          context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+    return _this;
+  };
+  qrcode.stringToBytesFuncs = {
+    'default' : function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        bytes.push(c & 0xff);
+      }
+      return bytes;
+    }
+  };
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['default'];
+  qrcode.createStringToBytes = function(unicodeData, numChars) {
+    var unicodeMap = function() {
+      var bin = base64DecodeInputStream(unicodeData);
+      var read = function() {
+        var b = bin.read();
+        if (b == -1) throw 'eof';
+        return b;
+      };
+      var count = 0;
+      var unicodeMap = {};
+      while (true) {
+        var b0 = bin.read();
+        if (b0 == -1) break;
+        var b1 = read();
+        var b2 = read();
+        var b3 = read();
+        var k = String.fromCharCode( (b0 << 8) | b1);
+        var v = (b2 << 8) | b3;
+        unicodeMap[k] = v;
+        count += 1;
+      }
+      if (count != numChars) {
+        throw count + ' != ' + numChars;
+      }
+      return unicodeMap;
+    }();
+    var unknownChar = '?'.charCodeAt(0);
+    return function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        if (c < 128) {
+          bytes.push(c);
+        } else {
+          var b = unicodeMap[s.charAt(i)];
+          if (typeof b == 'number') {
+            if ( (b & 0xff) == b) {
+              bytes.push(b);
+            } else {
+              bytes.push(b >>> 8);
+              bytes.push(b & 0xff);
+            }
+          } else {
+            bytes.push(unknownChar);
+          }
+        }
+      }
+      return bytes;
+    };
+  };
+  var QRMode = {
+    MODE_NUMBER :    1 << 0,
+    MODE_ALPHA_NUM : 1 << 1,
+    MODE_8BIT_BYTE : 1 << 2,
+    MODE_KANJI :     1 << 3
+  };
+  var QRErrorCorrectionLevel = {
+    L : 1,
+    M : 0,
+    Q : 3,
+    H : 2
+  };
+  var QRMaskPattern = {
+    PATTERN000 : 0,
+    PATTERN001 : 1,
+    PATTERN010 : 2,
+    PATTERN011 : 3,
+    PATTERN100 : 4,
+    PATTERN101 : 5,
+    PATTERN110 : 6,
+    PATTERN111 : 7
+  };
+  var QRUtil = function() {
+    var PATTERN_POSITION_TABLE = [
+      [],
+      [6, 18],
+      [6, 22],
+      [6, 26],
+      [6, 30],
+      [6, 34],
+      [6, 22, 38],
+      [6, 24, 42],
+      [6, 26, 46],
+      [6, 28, 50],
+      [6, 30, 54],
+      [6, 32, 58],
+      [6, 34, 62],
+      [6, 26, 46, 66],
+      [6, 26, 48, 70],
+      [6, 26, 50, 74],
+      [6, 30, 54, 78],
+      [6, 30, 56, 82],
+      [6, 30, 58, 86],
+      [6, 34, 62, 90],
+      [6, 28, 50, 72, 94],
+      [6, 26, 50, 74, 98],
+      [6, 30, 54, 78, 102],
+      [6, 28, 54, 80, 106],
+      [6, 32, 58, 84, 110],
+      [6, 30, 58, 86, 114],
+      [6, 34, 62, 90, 118],
+      [6, 26, 50, 74, 98, 122],
+      [6, 30, 54, 78, 102, 126],
+      [6, 26, 52, 78, 104, 130],
+      [6, 30, 56, 82, 108, 134],
+      [6, 34, 60, 86, 112, 138],
+      [6, 30, 58, 86, 114, 142],
+      [6, 34, 62, 90, 118, 146],
+      [6, 30, 54, 78, 102, 126, 150],
+      [6, 24, 50, 76, 102, 128, 154],
+      [6, 28, 54, 80, 106, 132, 158],
+      [6, 32, 58, 84, 110, 136, 162],
+      [6, 26, 54, 82, 110, 138, 166],
+      [6, 30, 58, 86, 114, 142, 170]
+    ];
+    var G15 = (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
+    var G18 = (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
+    var G15_MASK = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
+    var _this = {};
+    var getBCHDigit = function(data) {
+      var digit = 0;
+      while (data != 0) {
+        digit += 1;
+        data >>>= 1;
+      }
+      return digit;
+    };
+    _this.getBCHTypeInfo = function(data) {
+      var d = data << 10;
+      while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
+        d ^= (G15 << (getBCHDigit(d) - getBCHDigit(G15) ) );
+      }
+      return ( (data << 10) | d) ^ G15_MASK;
+    };
+    _this.getBCHTypeNumber = function(data) {
+      var d = data << 12;
+      while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
+        d ^= (G18 << (getBCHDigit(d) - getBCHDigit(G18) ) );
+      }
+      return (data << 12) | d;
+    };
+    _this.getPatternPosition = function(typeNumber) {
+      return PATTERN_POSITION_TABLE[typeNumber - 1];
+    };
+    _this.getMaskFunction = function(maskPattern) {
+      switch (maskPattern) {
+      case QRMaskPattern.PATTERN000 :
+        return function(i, j) { return (i + j) % 2 == 0; };
+      case QRMaskPattern.PATTERN001 :
+        return function(i, j) { return i % 2 == 0; };
+      case QRMaskPattern.PATTERN010 :
+        return function(i, j) { return j % 3 == 0; };
+      case QRMaskPattern.PATTERN011 :
+        return function(i, j) { return (i + j) % 3 == 0; };
+      case QRMaskPattern.PATTERN100 :
+        return function(i, j) { return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 == 0; };
+      case QRMaskPattern.PATTERN101 :
+        return function(i, j) { return (i * j) % 2 + (i * j) % 3 == 0; };
+      case QRMaskPattern.PATTERN110 :
+        return function(i, j) { return ( (i * j) % 2 + (i * j) % 3) % 2 == 0; };
+      case QRMaskPattern.PATTERN111 :
+        return function(i, j) { return ( (i * j) % 3 + (i + j) % 2) % 2 == 0; };
+      default :
+        throw 'bad maskPattern:' + maskPattern;
+      }
+    };
+    _this.getErrorCorrectPolynomial = function(errorCorrectLength) {
+      var a = qrPolynomial([1], 0);
+      for (var i = 0; i < errorCorrectLength; i += 1) {
+        a = a.multiply(qrPolynomial([1, QRMath.gexp(i)], 0) );
+      }
+      return a;
+    };
+    _this.getLengthInBits = function(mode, type) {
+      if (1 <= type && type < 10) {
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 10;
+        case QRMode.MODE_ALPHA_NUM : return 9;
+        case QRMode.MODE_8BIT_BYTE : return 8;
+        case QRMode.MODE_KANJI     : return 8;
+        default :
+          throw 'mode:' + mode;
+        }
+      } else if (type < 27) {
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 12;
+        case QRMode.MODE_ALPHA_NUM : return 11;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 10;
+        default :
+          throw 'mode:' + mode;
+        }
+      } else if (type < 41) {
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 14;
+        case QRMode.MODE_ALPHA_NUM : return 13;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 12;
+        default :
+          throw 'mode:' + mode;
+        }
+      } else {
+        throw 'type:' + type;
+      }
+    };
+    _this.getLostPoint = function(qrcode) {
+      var moduleCount = qrcode.getModuleCount();
+      var lostPoint = 0;
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount; col += 1) {
+          var sameCount = 0;
+          var dark = qrcode.isDark(row, col);
+          for (var r = -1; r <= 1; r += 1) {
+            if (row + r < 0 || moduleCount <= row + r) {
+              continue;
+            }
+            for (var c = -1; c <= 1; c += 1) {
+              if (col + c < 0 || moduleCount <= col + c) {
+                continue;
+              }
+              if (r == 0 && c == 0) {
+                continue;
+              }
+              if (dark == qrcode.isDark(row + r, col + c) ) {
+                sameCount += 1;
+              }
+            }
+          }
+          if (sameCount > 5) {
+            lostPoint += (3 + sameCount - 5);
+          }
+        }
+      };
+      for (var row = 0; row < moduleCount - 1; row += 1) {
+        for (var col = 0; col < moduleCount - 1; col += 1) {
+          var count = 0;
+          if (qrcode.isDark(row, col) ) count += 1;
+          if (qrcode.isDark(row + 1, col) ) count += 1;
+          if (qrcode.isDark(row, col + 1) ) count += 1;
+          if (qrcode.isDark(row + 1, col + 1) ) count += 1;
+          if (count == 0 || count == 4) {
+            lostPoint += 3;
+          }
+        }
+      }
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount - 6; col += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row, col + 1)
+              &&  qrcode.isDark(row, col + 2)
+              &&  qrcode.isDark(row, col + 3)
+              &&  qrcode.isDark(row, col + 4)
+              && !qrcode.isDark(row, col + 5)
+              &&  qrcode.isDark(row, col + 6) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount - 6; row += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row + 1, col)
+              &&  qrcode.isDark(row + 2, col)
+              &&  qrcode.isDark(row + 3, col)
+              &&  qrcode.isDark(row + 4, col)
+              && !qrcode.isDark(row + 5, col)
+              &&  qrcode.isDark(row + 6, col) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+      var darkCount = 0;
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount; row += 1) {
+          if (qrcode.isDark(row, col) ) {
+            darkCount += 1;
+          }
+        }
+      }
+      var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+      lostPoint += ratio * 10;
+      return lostPoint;
+    };
+    return _this;
+  }();
+  var QRMath = function() {
+    var EXP_TABLE = new Array(256);
+    var LOG_TABLE = new Array(256);
+    for (var i = 0; i < 8; i += 1) {
+      EXP_TABLE[i] = 1 << i;
+    }
+    for (var i = 8; i < 256; i += 1) {
+      EXP_TABLE[i] = EXP_TABLE[i - 4]
+        ^ EXP_TABLE[i - 5]
+        ^ EXP_TABLE[i - 6]
+        ^ EXP_TABLE[i - 8];
+    }
+    for (var i = 0; i < 255; i += 1) {
+      LOG_TABLE[EXP_TABLE[i] ] = i;
+    }
+    var _this = {};
+    _this.glog = function(n) {
+      if (n < 1) {
+        throw 'glog(' + n + ')';
+      }
+      return LOG_TABLE[n];
+    };
+    _this.gexp = function(n) {
+      while (n < 0) {
+        n += 255;
+      }
+      while (n >= 256) {
+        n -= 255;
+      }
+      return EXP_TABLE[n];
+    };
+    return _this;
+  }();
+  function qrPolynomial(num, shift) {
+    if (typeof num.length == 'undefined') {
+      throw num.length + '/' + shift;
+    }
+    var _num = function() {
+      var offset = 0;
+      while (offset < num.length && num[offset] == 0) {
+        offset += 1;
+      }
+      var _num = new Array(num.length - offset + shift);
+      for (var i = 0; i < num.length - offset; i += 1) {
+        _num[i] = num[i + offset];
+      }
+      return _num;
+    }();
+    var _this = {};
+    _this.getAt = function(index) {
+      return _num[index];
+    };
+    _this.getLength = function() {
+      return _num.length;
+    };
+    _this.multiply = function(e) {
+      var num = new Array(_this.getLength() + e.getLength() - 1);
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        for (var j = 0; j < e.getLength(); j += 1) {
+          num[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i) ) + QRMath.glog(e.getAt(j) ) );
+        }
+      }
+      return qrPolynomial(num, 0);
+    };
+    _this.mod = function(e) {
+      if (_this.getLength() - e.getLength() < 0) {
+        return _this;
+      }
+      var ratio = QRMath.glog(_this.getAt(0) ) - QRMath.glog(e.getAt(0) );
+      var num = new Array(_this.getLength() );
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        num[i] = _this.getAt(i);
+      }
+      for (var i = 0; i < e.getLength(); i += 1) {
+        num[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i) ) + ratio);
+      }
+      return qrPolynomial(num, 0).mod(e);
+    };
+    return _this;
+  };
+  var QRRSBlock = function() {
+    var RS_BLOCK_TABLE = [
+      [1, 26, 19],
+      [1, 26, 16],
+      [1, 26, 13],
+      [1, 26, 9],
+      [1, 44, 34],
+      [1, 44, 28],
+      [1, 44, 22],
+      [1, 44, 16],
+      [1, 70, 55],
+      [1, 70, 44],
+      [2, 35, 17],
+      [2, 35, 13],
+      [1, 100, 80],
+      [2, 50, 32],
+      [2, 50, 24],
+      [4, 25, 9],
+      [1, 134, 108],
+      [2, 67, 43],
+      [2, 33, 15, 2, 34, 16],
+      [2, 33, 11, 2, 34, 12],
+      [2, 86, 68],
+      [4, 43, 27],
+      [4, 43, 19],
+      [4, 43, 15],
+      [2, 98, 78],
+      [4, 49, 31],
+      [2, 32, 14, 4, 33, 15],
+      [4, 39, 13, 1, 40, 14],
+      [2, 121, 97],
+      [2, 60, 38, 2, 61, 39],
+      [4, 40, 18, 2, 41, 19],
+      [4, 40, 14, 2, 41, 15],
+      [2, 146, 116],
+      [3, 58, 36, 2, 59, 37],
+      [4, 36, 16, 4, 37, 17],
+      [4, 36, 12, 4, 37, 13],
+      [2, 86, 68, 2, 87, 69],
+      [4, 69, 43, 1, 70, 44],
+      [6, 43, 19, 2, 44, 20],
+      [6, 43, 15, 2, 44, 16],
+      [4, 101, 81],
+      [1, 80, 50, 4, 81, 51],
+      [4, 50, 22, 4, 51, 23],
+      [3, 36, 12, 8, 37, 13],
+      [2, 116, 92, 2, 117, 93],
+      [6, 58, 36, 2, 59, 37],
+      [4, 46, 20, 6, 47, 21],
+      [7, 42, 14, 4, 43, 15],
+      [4, 133, 107],
+      [8, 59, 37, 1, 60, 38],
+      [8, 44, 20, 4, 45, 21],
+      [12, 33, 11, 4, 34, 12],
+      [3, 145, 115, 1, 146, 116],
+      [4, 64, 40, 5, 65, 41],
+      [11, 36, 16, 5, 37, 17],
+      [11, 36, 12, 5, 37, 13],
+      [5, 109, 87, 1, 110, 88],
+      [5, 65, 41, 5, 66, 42],
+      [5, 54, 24, 7, 55, 25],
+      [11, 36, 12, 7, 37, 13],
+      [5, 122, 98, 1, 123, 99],
+      [7, 73, 45, 3, 74, 46],
+      [15, 43, 19, 2, 44, 20],
+      [3, 45, 15, 13, 46, 16],
+      [1, 135, 107, 5, 136, 108],
+      [10, 74, 46, 1, 75, 47],
+      [1, 50, 22, 15, 51, 23],
+      [2, 42, 14, 17, 43, 15],
+      [5, 150, 120, 1, 151, 121],
+      [9, 69, 43, 4, 70, 44],
+      [17, 50, 22, 1, 51, 23],
+      [2, 42, 14, 19, 43, 15],
+      [3, 141, 113, 4, 142, 114],
+      [3, 70, 44, 11, 71, 45],
+      [17, 47, 21, 4, 48, 22],
+      [9, 39, 13, 16, 40, 14],
+      [3, 135, 107, 5, 136, 108],
+      [3, 67, 41, 13, 68, 42],
+      [15, 54, 24, 5, 55, 25],
+      [15, 43, 15, 10, 44, 16],
+      [4, 144, 116, 4, 145, 117],
+      [17, 68, 42],
+      [17, 50, 22, 6, 51, 23],
+      [19, 46, 16, 6, 47, 17],
+      [2, 139, 111, 7, 140, 112],
+      [17, 74, 46],
+      [7, 54, 24, 16, 55, 25],
+      [34, 37, 13],
+      [4, 151, 121, 5, 152, 122],
+      [4, 75, 47, 14, 76, 48],
+      [11, 54, 24, 14, 55, 25],
+      [16, 45, 15, 14, 46, 16],
+      [6, 147, 117, 4, 148, 118],
+      [6, 73, 45, 14, 74, 46],
+      [11, 54, 24, 16, 55, 25],
+      [30, 46, 16, 2, 47, 17],
+      [8, 132, 106, 4, 133, 107],
+      [8, 75, 47, 13, 76, 48],
+      [7, 54, 24, 22, 55, 25],
+      [22, 45, 15, 13, 46, 16],
+      [10, 142, 114, 2, 143, 115],
+      [19, 74, 46, 4, 75, 47],
+      [28, 50, 22, 6, 51, 23],
+      [33, 46, 16, 4, 47, 17],
+      [8, 152, 122, 4, 153, 123],
+      [22, 73, 45, 3, 74, 46],
+      [8, 53, 23, 26, 54, 24],
+      [12, 45, 15, 28, 46, 16],
+      [3, 147, 117, 10, 148, 118],
+      [3, 73, 45, 23, 74, 46],
+      [4, 54, 24, 31, 55, 25],
+      [11, 45, 15, 31, 46, 16],
+      [7, 146, 116, 7, 147, 117],
+      [21, 73, 45, 7, 74, 46],
+      [1, 53, 23, 37, 54, 24],
+      [19, 45, 15, 26, 46, 16],
+      [5, 145, 115, 10, 146, 116],
+      [19, 75, 47, 10, 76, 48],
+      [15, 54, 24, 25, 55, 25],
+      [23, 45, 15, 25, 46, 16],
+      [13, 145, 115, 3, 146, 116],
+      [2, 74, 46, 29, 75, 47],
+      [42, 54, 24, 1, 55, 25],
+      [23, 45, 15, 28, 46, 16],
+      [17, 145, 115],
+      [10, 74, 46, 23, 75, 47],
+      [10, 54, 24, 35, 55, 25],
+      [19, 45, 15, 35, 46, 16],
+      [17, 145, 115, 1, 146, 116],
+      [14, 74, 46, 21, 75, 47],
+      [29, 54, 24, 19, 55, 25],
+      [11, 45, 15, 46, 46, 16],
+      [13, 145, 115, 6, 146, 116],
+      [14, 74, 46, 23, 75, 47],
+      [44, 54, 24, 7, 55, 25],
+      [59, 46, 16, 1, 47, 17],
+      [12, 151, 121, 7, 152, 122],
+      [12, 75, 47, 26, 76, 48],
+      [39, 54, 24, 14, 55, 25],
+      [22, 45, 15, 41, 46, 16],
+      [6, 151, 121, 14, 152, 122],
+      [6, 75, 47, 34, 76, 48],
+      [46, 54, 24, 10, 55, 25],
+      [2, 45, 15, 64, 46, 16],
+      [17, 152, 122, 4, 153, 123],
+      [29, 74, 46, 14, 75, 47],
+      [49, 54, 24, 10, 55, 25],
+      [24, 45, 15, 46, 46, 16],
+      [4, 152, 122, 18, 153, 123],
+      [13, 74, 46, 32, 75, 47],
+      [48, 54, 24, 14, 55, 25],
+      [42, 45, 15, 32, 46, 16],
+      [20, 147, 117, 4, 148, 118],
+      [40, 75, 47, 7, 76, 48],
+      [43, 54, 24, 22, 55, 25],
+      [10, 45, 15, 67, 46, 16],
+      [19, 148, 118, 6, 149, 119],
+      [18, 75, 47, 31, 76, 48],
+      [34, 54, 24, 34, 55, 25],
+      [20, 45, 15, 61, 46, 16]
+    ];
+    var qrRSBlock = function(totalCount, dataCount) {
+      var _this = {};
+      _this.totalCount = totalCount;
+      _this.dataCount = dataCount;
+      return _this;
+    };
+    var _this = {};
+    var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
+      switch(errorCorrectionLevel) {
+      case QRErrorCorrectionLevel.L :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+      case QRErrorCorrectionLevel.M :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+      case QRErrorCorrectionLevel.Q :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+      case QRErrorCorrectionLevel.H :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+      default :
+        return undefined;
+      }
+    };
+    _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
+      var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
+      if (typeof rsBlock == 'undefined') {
+        throw 'bad rs block @ typeNumber:' + typeNumber +
+            '/errorCorrectionLevel:' + errorCorrectionLevel;
+      }
+      var length = rsBlock.length / 3;
+      var list = [];
+      for (var i = 0; i < length; i += 1) {
+        var count = rsBlock[i * 3 + 0];
+        var totalCount = rsBlock[i * 3 + 1];
+        var dataCount = rsBlock[i * 3 + 2];
+        for (var j = 0; j < count; j += 1) {
+          list.push(qrRSBlock(totalCount, dataCount) );
+        }
+      }
+      return list;
+    };
+    return _this;
+  }();
+  var qrBitBuffer = function() {
+    var _buffer = [];
+    var _length = 0;
+    var _this = {};
+    _this.getBuffer = function() {
+      return _buffer;
+    };
+    _this.getAt = function(index) {
+      var bufIndex = Math.floor(index / 8);
+      return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+    };
+    _this.put = function(num, length) {
+      for (var i = 0; i < length; i += 1) {
+        _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+      }
+    };
+    _this.getLengthInBits = function() {
+      return _length;
+    };
+    _this.putBit = function(bit) {
+      var bufIndex = Math.floor(_length / 8);
+      if (_buffer.length <= bufIndex) {
+        _buffer.push(0);
+      }
+      if (bit) {
+        _buffer[bufIndex] |= (0x80 >>> (_length % 8) );
+      }
+      _length += 1;
+    };
+    return _this;
+  };
+  var qrNumber = function(data) {
+    var _mode = QRMode.MODE_NUMBER;
+    var _data = data;
+    var _this = {};
+    _this.getMode = function() {
+      return _mode;
+    };
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+    _this.write = function(buffer) {
+      var data = _data;
+      var i = 0;
+      while (i + 2 < data.length) {
+        buffer.put(strToNum(data.substring(i, i + 3) ), 10);
+        i += 3;
+      }
+      if (i < data.length) {
+        if (data.length - i == 1) {
+          buffer.put(strToNum(data.substring(i, i + 1) ), 4);
+        } else if (data.length - i == 2) {
+          buffer.put(strToNum(data.substring(i, i + 2) ), 7);
+        }
+      }
+    };
+    var strToNum = function(s) {
+      var num = 0;
+      for (var i = 0; i < s.length; i += 1) {
+        num = num * 10 + chatToNum(s.charAt(i) );
+      }
+      return num;
+    };
+    var chatToNum = function(c) {
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      }
+      throw 'illegal char :' + c;
+    };
+    return _this;
+  };
+  var qrAlphaNum = function(data) {
+    var _mode = QRMode.MODE_ALPHA_NUM;
+    var _data = data;
+    var _this = {};
+    _this.getMode = function() {
+      return _mode;
+    };
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+    _this.write = function(buffer) {
+      var s = _data;
+      var i = 0;
+      while (i + 1 < s.length) {
+        buffer.put(
+          getCode(s.charAt(i) ) * 45 +
+          getCode(s.charAt(i + 1) ), 11);
+        i += 2;
+      }
+      if (i < s.length) {
+        buffer.put(getCode(s.charAt(i) ), 6);
+      }
+    };
+    var getCode = function(c) {
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      } else if ('A' <= c && c <= 'Z') {
+        return c.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+      } else {
+        switch (c) {
+        case ' ' : return 36;
+        case '$' : return 37;
+        case '%' : return 38;
+        case '*' : return 39;
+        case '+' : return 40;
+        case '-' : return 41;
+        case '.' : return 42;
+        case '/' : return 43;
+        case ':' : return 44;
+        default :
+          throw 'illegal char :' + c;
+        }
+      }
+    };
+    return _this;
+  };
+  var qr8BitByte = function(data) {
+    var _mode = QRMode.MODE_8BIT_BYTE;
+    var _data = data;
+    var _bytes = qrcode.stringToBytes(data);
+    var _this = {};
+    _this.getMode = function() {
+      return _mode;
+    };
+    _this.getLength = function(buffer) {
+      return _bytes.length;
+    };
+    _this.write = function(buffer) {
+      for (var i = 0; i < _bytes.length; i += 1) {
+        buffer.put(_bytes[i], 8);
+      }
+    };
+    return _this;
+  };
+  var qrKanji = function(data) {
+    var _mode = QRMode.MODE_KANJI;
+    var _data = data;
+    var stringToBytes = qrcode.stringToBytesFuncs['SJIS'];
+    if (!stringToBytes) {
+      throw 'sjis not supported.';
+    }
+    !function(c, code) {
+      var test = stringToBytes(c);
+      if (test.length != 2 || ( (test[0] << 8) | test[1]) != code) {
+        throw 'sjis not supported.';
+      }
+    }('\u53cb', 0x9746);
+    var _bytes = stringToBytes(data);
+    var _this = {};
+    _this.getMode = function() {
+      return _mode;
+    };
+    _this.getLength = function(buffer) {
+      return ~~(_bytes.length / 2);
+    };
+    _this.write = function(buffer) {
+      var data = _bytes;
+      var i = 0;
+      while (i + 1 < data.length) {
+        var c = ( (0xff & data[i]) << 8) | (0xff & data[i + 1]);
+        if (0x8140 <= c && c <= 0x9FFC) {
+          c -= 0x8140;
+        } else if (0xE040 <= c && c <= 0xEBBF) {
+          c -= 0xC140;
+        } else {
+          throw 'illegal char at ' + (i + 1) + '/' + c;
+        }
+        c = ( (c >>> 8) & 0xff) * 0xC0 + (c & 0xff);
+        buffer.put(c, 13);
+        i += 2;
+      }
+      if (i < data.length) {
+        throw 'illegal char at ' + (i + 1);
+      }
+    };
+    return _this;
+  };
+  var byteArrayOutputStream = function() {
+    var _bytes = [];
+    var _this = {};
+    _this.writeByte = function(b) {
+      _bytes.push(b & 0xff);
+    };
+    _this.writeShort = function(i) {
+      _this.writeByte(i);
+      _this.writeByte(i >>> 8);
+    };
+    _this.writeBytes = function(b, off, len) {
+      off = off || 0;
+      len = len || b.length;
+      for (var i = 0; i < len; i += 1) {
+        _this.writeByte(b[i + off]);
+      }
+    };
+    _this.writeString = function(s) {
+      for (var i = 0; i < s.length; i += 1) {
+        _this.writeByte(s.charCodeAt(i) );
+      }
+    };
+    _this.toByteArray = function() {
+      return _bytes;
+    };
+    _this.toString = function() {
+      var s = '';
+      s += '[';
+      for (var i = 0; i < _bytes.length; i += 1) {
+        if (i > 0) {
+          s += ',';
+        }
+        s += _bytes[i];
+      }
+      s += ']';
+      return s;
+    };
+    return _this;
+  };
+  var base64EncodeOutputStream = function() {
+    var _buffer = 0;
+    var _buflen = 0;
+    var _length = 0;
+    var _base64 = '';
+    var _this = {};
+    var writeEncoded = function(b) {
+      _base64 += String.fromCharCode(encode(b & 0x3f) );
+    };
+    var encode = function(n) {
+      if (n < 0) {
+      } else if (n < 26) {
+        return 0x41 + n;
+      } else if (n < 52) {
+        return 0x61 + (n - 26);
+      } else if (n < 62) {
+        return 0x30 + (n - 52);
+      } else if (n == 62) {
+        return 0x2b;
+      } else if (n == 63) {
+        return 0x2f;
+      }
+      throw 'n:' + n;
+    };
+    _this.writeByte = function(n) {
+      _buffer = (_buffer << 8) | (n & 0xff);
+      _buflen += 8;
+      _length += 1;
+      while (_buflen >= 6) {
+        writeEncoded(_buffer >>> (_buflen - 6) );
+        _buflen -= 6;
+      }
+    };
+    _this.flush = function() {
+      if (_buflen > 0) {
+        writeEncoded(_buffer << (6 - _buflen) );
+        _buffer = 0;
+        _buflen = 0;
+      }
+      if (_length % 3 != 0) {
+        var padlen = 3 - _length % 3;
+        for (var i = 0; i < padlen; i += 1) {
+          _base64 += '=';
+        }
+      }
+    };
+    _this.toString = function() {
+      return _base64;
+    };
+    return _this;
+  };
+  var base64DecodeInputStream = function(str) {
+    var _str = str;
+    var _pos = 0;
+    var _buffer = 0;
+    var _buflen = 0;
+    var _this = {};
+    _this.read = function() {
+      while (_buflen < 8) {
+        if (_pos >= _str.length) {
+          if (_buflen == 0) {
+            return -1;
+          }
+          throw 'unexpected end of file./' + _buflen;
+        }
+        var c = _str.charAt(_pos);
+        _pos += 1;
+        if (c == '=') {
+          _buflen = 0;
+          return -1;
+        } else if (c.match(/^\s$/) ) {
+          continue;
+        }
+        _buffer = (_buffer << 6) | decode(c.charCodeAt(0) );
+        _buflen += 6;
+      }
+      var n = (_buffer >>> (_buflen - 8) ) & 0xff;
+      _buflen -= 8;
+      return n;
+    };
+    var decode = function(c) {
+      if (0x41 <= c && c <= 0x5a) {
+        return c - 0x41;
+      } else if (0x61 <= c && c <= 0x7a) {
+        return c - 0x61 + 26;
+      } else if (0x30 <= c && c <= 0x39) {
+        return c - 0x30 + 52;
+      } else if (c == 0x2b) {
+        return 62;
+      } else if (c == 0x2f) {
+        return 63;
+      } else {
+        throw 'c:' + c;
+      }
+    };
+    return _this;
+  };
+  var gifImage = function(width, height) {
+    var _width = width;
+    var _height = height;
+    var _data = new Array(width * height);
+    var _this = {};
+    _this.setPixel = function(x, y, pixel) {
+      _data[y * _width + x] = pixel;
+    };
+    _this.write = function(out) {
+      out.writeString('GIF87a');
+      out.writeShort(_width);
+      out.writeShort(_height);
+      out.writeByte(0x80); 
+      out.writeByte(0);
+      out.writeByte(0);
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+      out.writeString(',');
+      out.writeShort(0);
+      out.writeShort(0);
+      out.writeShort(_width);
+      out.writeShort(_height);
+      out.writeByte(0);
+      var lzwMinCodeSize = 2;
+      var raster = getLZWRaster(lzwMinCodeSize);
+      out.writeByte(lzwMinCodeSize);
+      var offset = 0;
+      while (raster.length - offset > 255) {
+        out.writeByte(255);
+        out.writeBytes(raster, offset, 255);
+        offset += 255;
+      }
+      out.writeByte(raster.length - offset);
+      out.writeBytes(raster, offset, raster.length - offset);
+      out.writeByte(0x00);
+      out.writeString(';');
+    };
+    var bitOutputStream = function(out) {
+      var _out = out;
+      var _bitLength = 0;
+      var _bitBuffer = 0;
+      var _this = {};
+      _this.write = function(data, length) {
+        if ( (data >>> length) != 0) {
+          throw 'length over';
+        }
+        while (_bitLength + length >= 8) {
+          _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
+          length -= (8 - _bitLength);
+          data >>>= (8 - _bitLength);
+          _bitBuffer = 0;
+          _bitLength = 0;
+        }
+        _bitBuffer = (data << _bitLength) | _bitBuffer;
+        _bitLength = _bitLength + length;
+      };
+      _this.flush = function() {
+        if (_bitLength > 0) {
+          _out.writeByte(_bitBuffer);
+        }
+      };
+      return _this;
+    };
+    var getLZWRaster = function(lzwMinCodeSize) {
+      var clearCode = 1 << lzwMinCodeSize;
+      var endCode = (1 << lzwMinCodeSize) + 1;
+      var bitLength = lzwMinCodeSize + 1;
+      var table = lzwTable();
+      for (var i = 0; i < clearCode; i += 1) {
+        table.add(String.fromCharCode(i) );
+      }
+      table.add(String.fromCharCode(clearCode) );
+      table.add(String.fromCharCode(endCode) );
+      var byteOut = byteArrayOutputStream();
+      var bitOut = bitOutputStream(byteOut);
+      bitOut.write(clearCode, bitLength);
+      var dataIndex = 0;
+      var s = String.fromCharCode(_data[dataIndex]);
+      dataIndex += 1;
+      while (dataIndex < _data.length) {
+        var c = String.fromCharCode(_data[dataIndex]);
+        dataIndex += 1;
+        if (table.contains(s + c) ) {
+          s = s + c;
+        } else {
+          bitOut.write(table.indexOf(s), bitLength);
+          if (table.size() < 0xfff) {
+            if (table.size() == (1 << bitLength) ) {
+              bitLength += 1;
+            }
+            table.add(s + c);
+          }
+          s = c;
+        }
+      }
+      bitOut.write(table.indexOf(s), bitLength);
+      bitOut.write(endCode, bitLength);
+      bitOut.flush();
+      return byteOut.toByteArray();
+    };
+    var lzwTable = function() {
+      var _map = {};
+      var _size = 0;
+      var _this = {};
+      _this.add = function(key) {
+        if (_this.contains(key) ) {
+          throw 'dup key:' + key;
+        }
+        _map[key] = _size;
+        _size += 1;
+      };
+      _this.size = function() {
+        return _size;
+      };
+      _this.indexOf = function(key) {
+        return _map[key];
+      };
+      _this.contains = function(key) {
+        return typeof _map[key] != 'undefined';
+      };
+      return _this;
+    };
+    return _this;
+  };
+  var createDataURL = function(width, height, getPixel) {
+    var gif = gifImage(width, height);
+    for (var y = 0; y < height; y += 1) {
+      for (var x = 0; x < width; x += 1) {
+        gif.setPixel(x, y, getPixel(x, y) );
+      }
+    }
+    var b = byteArrayOutputStream();
+    gif.write(b);
+    var base64 = base64EncodeOutputStream();
+    var bytes = b.toByteArray();
+    for (var i = 0; i < bytes.length; i += 1) {
+      base64.writeByte(bytes[i]);
+    }
+    base64.flush();
+    return 'data:image/gif;base64,' + base64;
+  };
+  return qrcode;
+}();
+!function() {
+  qrcode.stringToBytesFuncs['UTF-8'] = function(s) {
+    function toUTF8Array(str) {
+      var utf8 = [];
+      for (var i=0; i < str.length; i++) {
+        var charcode = str.charCodeAt(i);
+        if (charcode < 0x80) utf8.push(charcode);
+        else if (charcode < 0x800) {
+          utf8.push(0xc0 | (charcode >> 6),
+              0x80 | (charcode & 0x3f));
+        }
+        else if (charcode < 0xd800 || charcode >= 0xe000) {
+          utf8.push(0xe0 | (charcode >> 12),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+        else {
+          i++;
+          charcode = 0x10000 + (((charcode & 0x3ff)<<10)
+            | (str.charCodeAt(i) & 0x3ff));
+          utf8.push(0xf0 | (charcode >>18),
+              0x80 | ((charcode>>12) & 0x3f),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+      }
+      return utf8;
+    }
+    return toUTF8Array(s);
+  };
+}();
+(function (factory) {
+  if (typeof define === 'function' && define.amd) {
+      define([], factory);
+  } else if (typeof exports === 'object') {
+      module.exports = factory();
+  }
+}(function () {
+    return qrcode;
+}));
+
+</script>
+
+<!-- Application Client Logic -->
+<script>
+// State Management & LocalStorage
+const STORAGE_KEY = 'libspace-demo-v1';
+const THEME_KEY = 'libspace-theme';
+
+const initialDB = {
+  profile: { name: 'Student', reg: 'CSE326-DEMO', email: 'student@example.com', role: 'student' },
+  bookings: [],
+  favorites: [],
+  notices: [
+    { id: 1, text: 'Welcome to LibSpace! Explore seats, study rooms, and generate digital QR passes.', at: new Date().toISOString() }
+  ],
+  reports: [],
+  settings: { open: '08:00', close: '22:00', max: 4 }
+};
+
+
+// Realistic demo seed data for evaluation
+function ensureDemoSeedData() {
+  if (!db.bookings || db.bookings.length === 0) {
+    const d = new Date();
+    const curH = d.getHours();
+    const todayStr = today();
+    
+    // Future date for tomorrow
+    const tom = new Date();
+    tom.setDate(tom.getDate() + 1);
+    const tomStr = `${tom.getFullYear()}-${String(tom.getMonth()+1).padStart(2,'0')}-${String(tom.getDate()).padStart(2,'0')}`;
+
+    // Past date for yesterday
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yestStr = `${yest.getFullYear()}-${String(yest.getMonth()+1).padStart(2,'0')}-${String(yest.getDate()).padStart(2,'0')}`;
+
+    const activeStart = `${String(Math.max(8, curH - 1)).padStart(2, '0')}:00`;
+    const activeEnd = `${String(Math.min(22, curH + 2)).padStart(2, '0')}:00`;
+
+    db.bookings = [
+      {
+        id: 'LS-' + Date.now().toString(36).toUpperCase(),
+        kind: 'seat',
+        item: 'F1-Q-05',
+        date: todayStr,
+        start: activeStart,
+        end: activeEnd,
+        status: 'confirmed',
+        user: db.profile.name || 'Student',
+        checkedIn: true
+      },
+      {
+        id: 'LS-R108M',
+        kind: 'room',
+        item: 'Discussion Room Alpha',
+        date: tomStr,
+        start: '14:00',
+        end: '16:00',
+        status: 'confirmed',
+        user: db.profile.name || 'Student',
+        checkedIn: false
+      },
+      {
+        id: 'LS-YEST4',
+        kind: 'seat',
+        item: 'F1-Q-18',
+        date: yestStr,
+        start: '10:00',
+        end: '12:00',
+        status: 'completed',
+        user: db.profile.name || 'Student',
+        checkedIn: true
+      },
+      {
+        id: 'LS-OCP02',
+        kind: 'seat',
+        item: 'F1-Q-08',
+        date: todayStr,
+        start: '09:00',
+        end: '21:00',
+        status: 'confirmed',
+        user: 'Alex Rivera',
+        checkedIn: true
+      },
+      {
+        id: 'LS-OCP14',
+        kind: 'seat',
+        item: 'F1-Q-14',
+        date: todayStr,
+        start: '09:00',
+        end: '21:00',
+        status: 'confirmed',
+        user: 'Sarah Chen',
+        checkedIn: true
+      }
+    ];
+
+    if (!db.favorites.includes('F1-Q-05')) {
+      db.favorites.push('F1-Q-05');
+    }
+    if (!db.favorites.includes('F2-C-12')) {
+      db.favorites.push('F2-C-12');
+    }
+
+    persist();
+  }
+}
+
+let db;
+try {
+  db = JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(initialDB);
+} catch (e) {
+  db = structuredClone(initialDB);
+}
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+}
+
+// Helpers
+const $ = id => document.getElementById(id);
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+function safe(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Navigation Structure
+const navItems = [
+  { id: 'dashboard', icon: '⌂', label: 'Dashboard' },
+  { id: 'seats', icon: '▦', label: 'Book a Seat' },
+  { id: 'rooms', icon: '🚪', label: 'Study Rooms' },
+  { id: 'resources', icon: '💻', label: 'Resources' },
+  { id: 'bookings', icon: '▤', label: 'My Bookings' },
+  { id: 'calendar', icon: '📅', label: 'Calendar' },
+  { id: 'favorites', icon: '♡', label: 'Favorites' },
+  { id: 'notifications', icon: '🔔', label: 'Notifications' },
+  { id: 'support', icon: '?', label: 'Help & Support' },
+  { id: 'profile', icon: '◉', label: 'Profile' },
+  { id: 'admin', icon: '⚙', label: 'Admin Hub', adminOnly: true }
+];
+
+let currentPage = 'dashboard';
+let selectedSeat = null;
+let activeFeatureFilter = 'all';
+let activeBookingStatusFilter = 'all';
+let currentModalBooking = null;
+
+// Audio Synthesizer (Zero bandwidth focus ambience)
+let audioCtx = null;
+let audioNoiseNode = null;
+let audioGainNode = null;
+let isAudioPlaying = false;
+let currentAudioMode = 'rain';
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function toggleFocusAudio() {
+  initAudio();
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  if (isAudioPlaying) {
+    stopFocusAudio();
+  } else {
+    startFocusAudio();
+  }
+}
+
+function startFocusAudio() {
+  initAudio();
+  stopFocusAudio();
+
+  // Generate 5-second buffer of colored noise
+  const bufferSize = audioCtx.sampleRate * 4;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  let lastOut = 0.0;
+  for (let i = 0; i < bufferSize; i++) {
+    const white = Math.random() * 2 - 1;
+    if (currentAudioMode === 'rain') {
+      // Brownish / rain noise
+      lastOut = (lastOut + (0.02 * white)) / 1.02;
+      data[i] = lastOut * 3.5;
+    } else if (currentAudioMode === 'library') {
+      // Pink / gentle coffee murmur
+      lastOut = (lastOut + (0.05 * white)) / 1.05;
+      data[i] = lastOut * 2.5;
+    } else {
+      // Pure soft white noise
+      data[i] = white * 0.15;
+    }
+  }
+
+  audioNoiseNode = audioCtx.createBufferSource();
+  audioNoiseNode.buffer = buffer;
+  audioNoiseNode.loop = true;
+
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = currentAudioMode === 'rain' ? 'lowpass' : (currentAudioMode === 'library' ? 'bandpass' : 'lowpass');
+  filter.frequency.value = currentAudioMode === 'rain' ? 800 : (currentAudioMode === 'library' ? 1200 : 3000);
+
+  audioGainNode = audioCtx.createGain();
+  const vol = parseFloat($('focusVolume').value || 0.3);
+  audioGainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+
+  audioNoiseNode.connect(filter);
+  filter.connect(audioGainNode);
+  audioGainNode.connect(audioCtx.destination);
+
+  audioNoiseNode.start();
+  isAudioPlaying = true;
+  $('focusPlayBtn').textContent = '⏸';
+  toast('🎧 Focus audio playing: ' + currentAudioMode);
+}
+
+function stopFocusAudio() {
+  if (audioNoiseNode) {
+    try { audioNoiseNode.stop(); } catch(e){}
+    audioNoiseNode = null;
+  }
+  isAudioPlaying = false;
+  $('focusPlayBtn').textContent = '▶';
+}
+
+function setFocusAudioMode(mode) {
+  currentAudioMode = mode;
+  document.querySelectorAll('.focus-mode-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(mode));
+  });
+  if (isAudioPlaying) {
+    startFocusAudio();
+  }
+}
+
+function setFocusVolume(v) {
+  if (audioGainNode && audioCtx) {
+    audioGainNode.gain.setValueAtTime(parseFloat(v), audioCtx.currentTime);
+  }
+}
+
+// Toast Notifications
+function toast(msg) {
+  const container = $('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast-item';
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateY(10px)';
+    t.style.transition = 'all 0.3s ease';
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+}
+
+function notice(text) {
+  db.notices.unshift({ id: Date.now(), text, at: new Date().toISOString() });
+  persist();
+  updateNoticeBadge();
+}
+
+function updateNoticeBadge() {
+  const badge = $('bellBadge');
+  const count = db.notices.length;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// Navigation & Tab Switching
+function showPage(pageId) {
+  if (pageId === 'admin' && db.profile.role !== 'admin') {
+    toast('Access denied. Switch to Admin role in Profile & Settings.');
+    return;
+  }
+  currentPage = pageId;
+
+  document.querySelectorAll('.section').forEach(s => {
+    s.classList.toggle('active', s.id === pageId);
+  });
+
+  const found = navItems.find(n => n.id === pageId);
+  if (found) {
+    $('pageTitle').textContent = found.label;
+    $('pageSubtitle').textContent = pageId === 'dashboard'
+      ? 'Find your study space and stay focused.'
+      : `Manage your ${found.label.toLowerCase()} preferences.`;
+  }
+
+  renderSidebarNav();
+  renderCurrentPage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderSidebarNav() {
+  const navContainer = $('sidebarNav');
+  navContainer.innerHTML = navItems
+    .filter(item => !item.adminOnly || db.profile.role === 'admin')
+    .map(item => `
+      <button class="nav-item ${currentPage === item.id ? 'active' : ''}" onclick="showPage('${item.id}')">
+        <div class="nav-item-left">
+          <span class="icon">${item.icon}</span>
+          <span>${item.label}</span>
+        </div>
+        ${item.id === 'notifications' && db.notices.length ? `<span class="badge primary">${db.notices.length}</span>` : ''}
+        ${item.id === 'favorites' && db.favorites.length ? `<span class="badge">${db.favorites.length}</span>` : ''}
+      </button>
+    `).join('');
+
+  // Update mobile bottom nav
+  document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+    const fn = btn.getAttribute('onclick');
+    if (fn) {
+      btn.classList.toggle('active', fn.includes(`'${currentPage}'`));
+    }
+  });
+
+  $('navUserName').textContent = db.profile.name || 'Student';
+  updateNoticeBadge();
+}
+
+// Theme
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem(THEME_KEY, document.body.classList.contains('dark') ? 'dark' : 'light');
+}
+if (localStorage.getItem(THEME_KEY) === 'dark') {
+  document.body.classList.add('dark');
+}
+
+// Booking Status Helpers
+function getBookingStatus(b) {
+  if (b.status === 'cancelled') return 'cancelled';
+  const now = Date.now();
+  const start = new Date(`${b.date}T${b.start}`).getTime();
+  const end = new Date(`${b.date}T${b.end}`).getTime();
+  if (end <= now) return 'completed';
+  if (start <= now && end > now) return 'active';
+  return 'confirmed';
+}
+
+function isSlotOverlap(s1, e1, s2, e2) {
+  return s1 < e2 && s2 < e1;
+}
+
+function hasConflict(kind, itemId, date, start, end, excludeId = null) {
+  return db.bookings.some(b => 
+    b.id !== excludeId &&
+    b.kind === kind &&
+    b.item === itemId &&
+    b.date === date &&
+    getBookingStatus(b) !== 'cancelled' &&
+    getBookingStatus(b) !== 'completed' &&
+    isSlotOverlap(start, end, b.start, b.end)
+  );
+}
+
+function validateSlot(date, start, end) {
+  if (!date || !start || !end) return 'Please choose a valid date, start time, and end time.';
+  if (date < today()) return 'Cannot reserve a slot in the past.';
+  if (start >= end) return 'End time must be later than start time.';
+  if (start < db.settings.open || end > db.settings.close) {
+    return `Booking outside library operating hours (${db.settings.open} - ${db.settings.close}).`;
+  }
+  const hours = (new Date(`${date}T${end}`) - new Date(`${date}T${start}`)) / 36e5;
+  if (hours > Number(db.settings.max)) {
+    return `Maximum booking duration is ${db.settings.max} hours.`;
+  }
+  if (new Date(`${date}T${start}`).getTime() <= Date.now() - 5 * 60 * 1000) {
+    return 'Start time must be in the future (or current hour).';
+  }
+  return null;
+}
+
+// QR Code Generator & Digital Pass Generation
+function generatePassQRCode(booking) {
+  const container = $('modalQrCodeContainer');
+  container.innerHTML = '';
+  
+  // Scannable Pass verification payload
+  const payload = `LIBSPACE:PASS:${booking.id}:ITEM:${booking.item}:DATE:${booking.date}:SLOT:${booking.start}-${booking.end}:USER:${booking.user}`;
+
+  try {
+    if (typeof qrcode !== 'undefined') {
+      const qr = qrcode(0, 'M');
+      qr.addData(payload);
+      qr.make();
+      // Render clean high-res SVG
+      container.innerHTML = qr.createSvgTag({ cellSize: 5, margin: 2 });
+    } else {
+      container.innerHTML = `<div style="font-size:42px; text-align:center; padding:20px;">▦</div>`;
+    }
+  } catch (e) {
+    console.error('QR code generation error:', e);
+    container.innerHTML = `<div style="font-size:42px; text-align:center; padding:20px;">▦</div>`;
+  }
+}
+
+function openDigitalPass(bookingId) {
+  const booking = db.bookings.find(b => b.id === bookingId);
+  if (!booking) {
+    toast('Reservation pass not found.');
+    return;
+  }
+  currentModalBooking = booking;
+
+  $('modalPassUser').textContent = booking.user || db.profile.name;
+  $('modalPassReg').textContent = db.profile.reg || 'CSE326-DEMO';
+  $('modalPassItem').textContent = booking.item;
+  $('modalPassType').textContent = booking.kind === 'seat' ? 'Study Desk' : (booking.kind === 'room' ? 'Study Room' : 'Resource');
+  $('modalPassIdDisplay').textContent = booking.id;
+  $('modalPassDate').textContent = booking.date;
+  $('modalPassTime').textContent = `${booking.start} - ${booking.end}`;
+  $('modalPassLocation').textContent = `Floor ${booking.item.startsWith('F') ? booking.item[1] : '1'} · Campus Library`;
+
+  const st = getBookingStatus(booking);
+  const badge = $('modalPassStatusBadge');
+  badge.textContent = st.toUpperCase();
+  if (st === 'active') {
+    badge.style.background = '#10b981';
+    badge.style.color = 'white';
+  } else if (st === 'confirmed') {
+    badge.style.background = '#4f46e5';
+    badge.style.color = 'white';
+  } else {
+    badge.style.background = '#64748b';
+    badge.style.color = 'white';
+  }
+
+  $('modalPassCheckin').textContent = booking.checkedIn ? '✓ Verified Check-In' : 'Pending Gate Arrival';
+
+  generatePassQRCode(booking);
+  $('passModal').classList.add('show');
+}
+
+function closePassModal() {
+  $('passModal').classList.remove('show');
+  currentModalBooking = null;
+}
+
+
+function copyPassCode() {
+  if (!currentModalBooking) return;
+  navigator.clipboard.writeText(currentModalBooking.id).then(() => {
+    toast(`Copied Pass ID: ${currentModalBooking.id}`);
+  }).catch(() => {
+    toast(`Pass ID: ${currentModalBooking.id}`);
+  });
+}
+
+function downloadPassPNG() {
+  if (!currentModalBooking) return;
+  const b = currentModalBooking;
+
+  // Render Pass onto a clean offscreen high-res canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 780;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 600, 780);
+
+  // Gradient Header
+  const grad = ctx.createLinearGradient(0, 0, 600, 140);
+  grad.addColorStop(0, '#3730a3');
+  grad.addColorStop(1, '#4f46e5');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 600, 140);
+
+  // Brand
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 28px system-ui';
+  ctx.fillText('▣ LibSpace Study Pass', 36, 60);
+  ctx.font = '14px system-ui';
+  ctx.fillText('Campus Library Digital Access Pass', 36, 92);
+
+  // Status Badge
+  ctx.fillStyle = '#10b981';
+  roundRect(ctx, 440, 40, 120, 36, 18, true, false);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 14px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('VERIFIED', 500, 63);
+  ctx.textAlign = 'left';
+
+  // Details
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 12px system-ui';
+  ctx.fillText('STUDENT NAME', 36, 180);
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 20px system-ui';
+  ctx.fillText(b.user || 'Student', 36, 208);
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 12px system-ui';
+  ctx.fillText('RESERVED SPACE', 360, 180);
+  ctx.fillStyle = '#4f46e5';
+  ctx.font = 'bold 24px system-ui';
+  ctx.fillText(b.item, 360, 208);
+
+  // Line
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(36, 230); ctx.lineTo(564, 230);
+  ctx.stroke();
+
+  // Date & Time
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 12px system-ui';
+  ctx.fillText('DATE', 36, 260);
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 18px system-ui';
+  ctx.fillText(b.date, 36, 286);
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 12px system-ui';
+  ctx.fillText('TIME SLOT', 220, 260);
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 18px system-ui';
+  ctx.fillText(`${b.start} – ${b.end}`, 220, 286);
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 12px system-ui';
+  ctx.fillText('FACILITY', 400, 260);
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 18px system-ui';
+  ctx.fillText('Floor 1 Quiet Hub', 400, 286);
+
+  // QR Code Box
+  ctx.fillStyle = '#f8fafc';
+  ctx.strokeStyle = '#e2e8f0';
+  roundRect(ctx, 160, 330, 280, 280, 16, true, true);
+
+  // Render QR Code onto canvas
+  if (typeof qrcode !== 'undefined') {
+    const qr = qrcode(0, 'M');
+    qr.addData(`LIBSPACE:PASS:${b.id}:${b.item}:${b.date}`);
+    qr.make();
+    const count = qr.getModuleCount();
+    const cellSize = Math.floor(220 / count);
+    const offset = Math.floor((280 - cellSize * count) / 2);
+
+    ctx.fillStyle = '#0f172a';
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (qr.isDark(r, c)) {
+          ctx.fillRect(160 + offset + c * cellSize, 330 + offset + r * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+  }
+
+  // Pass ID below QR
+  ctx.fillStyle = '#475569';
+  ctx.font = 'bold 16px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(b.id, 300, 645);
+
+  // Security Seal
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px system-ui';
+  ctx.fillText('Official Library Entry Pass · Valid for Campus Check-in', 300, 680);
+  ctx.textAlign = 'left';
+
+  // Download
+  const link = document.createElement('a');
+  link.download = `libspace-pass-${b.id}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('📥 Pass image (PNG) downloaded');
+}
+
+function printPassTicket() {
+  window.print();
+}
+
+function downloadPassICS() {
+  if (!currentModalBooking) return;
+  const b = currentModalBooking;
+  const startISO = b.date.replace(/-/g, '') + 'T' + b.start.replace(/:/g, '') + '00';
+  const endISO = b.date.replace(/-/g, '') + 'T' + b.end.replace(/:/g, '') + '00';
+
+  const icsData = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//LibSpace//Campus Smart Library//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${b.id}@libspace.campus`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+    `DTSTART:${startISO}`,
+    `DTEND:${endISO}`,
+    `SUMMARY:LibSpace Reservation: ${b.item}`,
+    `DESCRIPTION:Booking ID ${b.id} for ${b.kind} ${b.item}. Verified study session.\nStudent: ${b.user}`,
+    'LOCATION:University Central Library',
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `libspace-booking-${b.id}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📅 Calendar event (.ics) downloaded');
+}
+
+// Seat ID generator (F1-Q-01..40)
+function makeSeatId(floor, zone, num) {
+  const zCode = zone === 'Quiet' ? 'Q' : (zone === 'Collaborative' ? 'C' : 'K');
+  return `F${floor}-${zCode}-${String(num).padStart(2, '0')}`;
+}
+
+// Seat Attributes Helper
+function getSeatAttributes(num) {
+  return {
+    power: num % 2 === 0,
+    window: num % 5 === 0,
+    accessible: num % 10 === 1,
+    computer: num >= 31
+  };
+}
+
+// Draw Seats and Live Floor Radar
+function onSeatControlsChange() {
+  selectedSeat = null;
+  updateDurationBadge();
+  drawSeats();
+}
+
+function onSeatTimeChange() {
+  updateDurationBadge();
+  drawSeats();
+}
+
+function updateDurationBadge() {
+  const s = $('seatStart').value;
+  const e = $('seatEnd').value;
+  if (!s || !e) return;
+  const [sh, sm] = s.split(':').map(Number);
+  const [eh, em] = e.split(':').map(Number);
+  const diffMins = (eh * 60 + em) - (sh * 60 + sm);
+  const badge = $('slotDurationBadge');
+  if (diffMins > 0) {
+    const hrs = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    badge.textContent = `Duration: ${hrs}h ${mins ? mins + 'm' : ''}`;
+    badge.className = diffMins > Number(db.settings.max) * 60 ? 'badge warning' : 'badge primary';
+  } else {
+    badge.textContent = 'Invalid time range';
+    badge.className = 'badge warning';
+  }
+}
+
+function applyTimePreset(preset) {
+  const now = new Date();
+  const formatTime = d => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+  if (preset === 'now1') {
+    $('seatDate').value = today();
+    now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15);
+    $('seatStart').value = formatTime(now);
+    now.setHours(now.getHours() + 1);
+    $('seatEnd').value = formatTime(now);
+  } else if (preset === 'now2') {
+    $('seatDate').value = today();
+    now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15);
+    $('seatStart').value = formatTime(now);
+    now.setHours(now.getHours() + 2);
+    $('seatEnd').value = formatTime(now);
+  } else if (preset === 'morning') {
+    $('seatStart').value = '09:00';
+    $('seatEnd').value = '12:00';
+  } else if (preset === 'afternoon') {
+    $('seatStart').value = '13:00';
+    $('seatEnd').value = '16:00';
+  } else if (preset === 'evening') {
+    $('seatStart').value = '17:00';
+    $('seatEnd').value = '20:00';
+  }
+
+  updateDurationBadge();
+  drawSeats();
+}
+
+function setFeatureFilter(feature, el) {
+  activeFeatureFilter = feature;
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    if (c.dataset.feature) c.classList.toggle('active', c.dataset.feature === feature);
+  });
+  drawSeats();
+}
+
+function drawSeats() {
+  renderFloorPlanCanvas();
+  const floor = $('seatFloor').value;
+  const zone = $('seatZone').value;
+  const date = $('seatDate').value;
+  const start = $('seatStart').value;
+  const end = $('seatEnd').value;
+  const search = ($('seatSearch').value || '').trim().toLowerCase();
+
+  const podGrid = $('seatPodGrid');
+  podGrid.innerHTML = '';
+
+  let availableCount = 0;
+  let powerAvail = 0;
+  let windowAvail = 0;
+
+  // 4 Pods of 10 desks each (Total 40 desks per floor/zone)
+  const pods = [
+    { title: 'Study Pod A (Desks 01–10)', start: 1, end: 10 },
+    { title: 'Study Pod B (Desks 11–20)', start: 11, end: 20 },
+    { title: 'Study Pod C (Desks 21–30)', start: 21, end: 30 },
+    { title: 'Study Pod D (Desks 31–40)', start: 31, end: 40 }
+  ];
+
+  pods.forEach(pod => {
+    const podCard = document.createElement('div');
+    podCard.className = 'pod-card';
+    
+    const podHead = document.createElement('div');
+    podHead.className = 'pod-header';
+    podHead.innerHTML = `<span>${pod.title}</span><span id="podAvail-${pod.start}">Available</span>`;
+    podCard.appendChild(podHead);
+
+    const podSeats = document.createElement('div');
+    podSeats.className = 'pod-seats';
+
+    let podFree = 0;
+
+    for (let n = pod.start; n <= pod.end; n++) {
+      const id = makeSeatId(floor, zone, n);
+      const attrs = getSeatAttributes(n);
+
+      // Amenity Filter match
+      if (activeFeatureFilter === 'power' && !attrs.power) continue;
+      if (activeFeatureFilter === 'window' && !attrs.window) continue;
+      if (activeFeatureFilter === 'accessible' && !attrs.accessible) continue;
+      if (activeFeatureFilter === 'computer' && !attrs.computer) continue;
+
+      // Search match
+      if (search && !id.toLowerCase().includes(search) && !String(n).includes(search)) continue;
+
+      const isOccupied = hasConflict('seat', id, date, start, end);
+      const isMine = db.bookings.some(b => b.kind === 'seat' && b.item === id && b.date === date && getBookingStatus(b) === 'active');
+
+      if (!isOccupied) {
+        availableCount++;
+        podFree++;
+        if (attrs.power) powerAvail++;
+        if (attrs.window) windowAvail++;
+      }
+
+      const btn = document.createElement('button');
+      btn.className = 'seat-btn' + (isOccupied ? ' occupied' : '') + (isMine ? ' mine' : '') + (selectedSeat === id ? ' selected' : '');
+      btn.disabled = isOccupied;
+      
+      // Amenity Badge Icons
+      let icons = '';
+      if (attrs.power) icons += '⚡';
+      if (attrs.window) icons += '🪟';
+      if (attrs.accessible) icons += '♿';
+      if (attrs.computer) icons += '🖥️';
+
+      btn.innerHTML = `
+        <span>${String(n).padStart(2, '0')}</span>
+        <span class="seat-badge-icon">${icons || '·'}</span>
+      `;
+      btn.title = `${id} (${isOccupied ? 'Reserved' : 'Available'})`;
+
+      btn.onclick = () => {
+        selectedSeat = id;
+        document.querySelectorAll('.seat-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        updateSelectedSeatDrawer(id, attrs);
+      };
+
+      podSeats.appendChild(btn);
+    }
+
+    podCard.appendChild(podSeats);
+    podHead.querySelector(`#podAvail-${pod.start}`).textContent = `${podFree} free`;
+    podGrid.appendChild(podCard);
+  });
+
+  // Update Live Floor Radar Cards
+  $('radarFloorTitle').textContent = `Floor ${floor} · ${zone} Study Zone`;
+  $('radarSeatsCount').textContent = `${availableCount} / 40 Free`;
+  $('radarPowerCount').textContent = `${powerAvail} Ready`;
+  $('radarWindowCount').textContent = `${windowAvail} Free`;
+
+  // Dynamic Noise Meter
+  if (zone === 'Quiet') {
+    $('radarNoiseLevel').innerHTML = '🟢 26 dB · Strict Silence';
+  } else if (zone === 'Collaborative') {
+    $('radarNoiseLevel').innerHTML = '🟡 52 dB · Active Discussion';
+  } else {
+    $('radarNoiseLevel').innerHTML = '🔵 41 dB · Keyboards & Labs';
+  }
+
+  if (!selectedSeat) {
+    resetSelectedSeatDrawer();
+  }
+}
+
+function updateSelectedSeatDrawer(id, attrs) {
+  $('selectedSeatTitle').innerHTML = `🪑 Desk ${id} <span class="badge primary">Available</span>`;
+  
+  let features = [];
+  if (attrs.power) features.push('⚡ AC Power');
+  if (attrs.window) features.push('🪟 Natural Light');
+  if (attrs.accessible) features.push('♿ Accessible');
+  if (attrs.computer) features.push('🖥️ Dual Monitor');
+  if (!features.length) features.push('Standard Study Desk');
+
+  $('selectedSeatMeta').textContent = `Floor ${id[1]} · ${$('seatZone').value} · Features: ${features.join(' · ')}`;
+  
+  $('confirmSeatBtn').disabled = false;
+  $('favSeatBtn').disabled = false;
+  $('favSeatBtn').textContent = db.favorites.includes(id) ? '♥ Saved Favorite' : '♡ Favorite';
+}
+
+function resetSelectedSeatDrawer() {
+  $('selectedSeatTitle').textContent = 'Select an available desk above';
+  $('selectedSeatMeta').textContent = 'Click on any green desk in Pod A, B, C, or D';
+  $('confirmSeatBtn').disabled = true;
+  $('favSeatBtn').disabled = true;
+  $('favSeatBtn').textContent = '♡ Favorite';
+}
+
+function favoriteSelectedSeat() {
+  if (!selectedSeat) return;
+  if (!db.favorites.includes(selectedSeat)) {
+    db.favorites.push(selectedSeat);
+    toast(`Added ${selectedSeat} to favorites!`);
+  } else {
+    db.favorites = db.favorites.filter(x => x !== selectedSeat);
+    toast(`Removed ${selectedSeat} from favorites`);
+  }
+  persist();
+  $('favSeatBtn').textContent = db.favorites.includes(selectedSeat) ? '♥ Saved Favorite' : '♡ Favorite';
+  renderSidebarNav();
+}
+
+function smartRecommendBestSeat() {
+  const floor = $('seatFloor').value;
+  const zone = $('seatZone').value;
+  const date = $('seatDate').value;
+  const start = $('seatStart').value;
+  const end = $('seatEnd').value;
+
+  // Prefer desk with Power + Window
+  for (let n = 1; n <= 40; n++) {
+    const id = makeSeatId(floor, zone, n);
+    const attrs = getSeatAttributes(n);
+    if (attrs.power && !hasConflict('seat', id, date, start, end)) {
+      selectedSeat = id;
+      drawSeats();
+      updateSelectedSeatDrawer(id, attrs);
+      toast(`⚡ Recommended desk ${id} selected!`);
+      return;
+    }
+  }
+
+  // Fallback to any free desk
+  for (let n = 1; n <= 40; n++) {
+    const id = makeSeatId(floor, zone, n);
+    if (!hasConflict('seat', id, date, start, end)) {
+      selectedSeat = id;
+      drawSeats();
+      updateSelectedSeatDrawer(id, getSeatAttributes(n));
+      toast(`Selected available desk ${id}`);
+      return;
+    }
+  }
+
+  toast('No desks currently free for the selected time slot.');
+}
+
+function reserveSelectedSeat() {
+  if (!selectedSeat) {
+    toast('Please select an available desk first.');
+    return;
+  }
+  const date = $('seatDate').value;
+  const start = $('seatStart').value;
+  const end = $('seatEnd').value;
+
+  const err = validateSlot(date, start, end);
+  if (err) {
+    toast(err);
+    return;
+  }
+
+  if (hasConflict('seat', selectedSeat, date, start, end)) {
+    toast('Sorry, that desk was just reserved. Please pick another.');
+    drawSeats();
+    return;
+  }
+
+  const booking = {
+    id: 'LS-' + Date.now().toString(36).toUpperCase(),
+    kind: 'seat',
+    item: selectedSeat,
+    date,
+    start,
+    end,
+    status: 'confirmed',
+    user: db.profile.name || 'Student',
+    checkedIn: false
+  };
+
+  db.bookings.unshift(booking);
+  notice(`Seat ${selectedSeat} confirmed for ${date} (${start} - ${end})`);
+  persist();
+
+  toast('🎉 Reservation confirmed!');
+  ensureDemoSeedData();
+  renderAll();
+  openDigitalPass(booking.id);
+}
+
+// Study Rooms & Resources Data
+const roomList = [
+  { id: 'R1', name: 'Discussion Room Alpha', capacity: 6, features: 'Whiteboard · 4K Presentation Screen · Zoom Room', icon: '👥' },
+  { id: 'R2', name: 'Quiet Focus Cabin Beta', capacity: 1, features: 'Acoustic Soundproofing · Ergonomic Chair · Dual Power', icon: '🤫' },
+  { id: 'R3', name: 'Media Collaboration Suite', capacity: 8, features: 'HD Projector · Surround Mic · Magnetic Whiteboards', icon: '📽️' }
+];
+
+const resourceList = [
+  { id: 'PC1', name: 'High-Performance Workstation', capacity: 1, features: 'Core i9 · RTX 4080 · 32GB RAM · Dual Displays', icon: '🖥️' },
+  { id: 'PR1', name: 'Wireless Presentation Projector', capacity: 1, features: '4K Anker Nebula · HDMI / AirPlay / Miracast', icon: '📽️' },
+  { id: 'TB1', name: 'Academic Research Tablet', capacity: 1, features: 'Apple iPad Pro · Apple Pencil · JSTOR / IEEE Access', icon: '📱' },
+  { id: 'CH1', name: 'High-Speed Charging Station', capacity: 1, features: '100W GaN Fast Charger · Multi USB-C & MagSafe', icon: '🔌' }
+];
+
+function renderRooms() {
+  const date = $('roomDate').value;
+  const start = $('roomStart').value;
+  const end = $('roomEnd').value;
+  const q = ($('roomSearch').value || '').toLowerCase();
+
+  const grid = $('roomCardGrid');
+  grid.innerHTML = roomList.filter(r => r.name.toLowerCase().includes(q) || r.features.toLowerCase().includes(q)).map(r => {
+    const isBooked = hasConflict('room', r.id, date, start, end);
+    return `
+      <div class="room-card">
+        <div class="room-visual">${r.icon}</div>
+        <div class="room-body">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="margin:0; font-size:16px;">${safe(r.name)}</h3>
+              <span class="badge">${r.capacity} People</span>
+            </div>
+            <p style="font-size:12.5px; color:var(--ink-muted); margin:8px 0 0;">${safe(r.features)}</p>
+          </div>
+          <div>
+            <div style="font-size:11.5px; margin-bottom:8px; font-weight:700; color:${isBooked ? 'var(--danger)' : 'var(--success)'};">
+              ${isBooked ? '● Occupied for selected slot' : '● Available for reservation'}
+            </div>
+            <button class="btn" style="width:100%;" ${isBooked ? 'disabled' : ''} onclick="bookRoom('${r.id}')">
+              ${isBooked ? 'Slot Unavailable' : 'Book Room & Get Pass'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function bookRoom(roomId) {
+  const date = $('roomDate').value;
+  const start = $('roomStart').value;
+  const end = $('roomEnd').value;
+  const err = validateSlot(date, start, end);
+  if (err) { toast(err); return; }
+
+  if (hasConflict('room', roomId, date, start, end)) {
+    toast('Room already booked for this slot.');
+    return;
+  }
+
+  const room = roomList.find(r => r.id === roomId);
+  const booking = {
+    id: 'LS-' + Date.now().toString(36).toUpperCase(),
+    kind: 'room',
+    item: room.name,
+    date,
+    start,
+    end,
+    status: 'confirmed',
+    user: db.profile.name || 'Student',
+    checkedIn: false
+  };
+
+  db.bookings.unshift(booking);
+  notice(`Room reservation confirmed: ${room.name} on ${date}`);
+  persist();
+  toast('🎉 Study room confirmed!');
+  renderAll();
+  openDigitalPass(booking.id);
+}
+
+function renderResources() {
+  const date = $('resourceDate').value;
+  const start = $('resourceStart').value;
+  const end = $('resourceEnd').value;
+  const q = ($('resourceSearch').value || '').toLowerCase();
+
+  const grid = $('resourceCardGrid');
+  grid.innerHTML = resourceList.filter(r => r.name.toLowerCase().includes(q) || r.features.toLowerCase().includes(q)).map(r => {
+    const isBooked = hasConflict('resource', r.id, date, start, end);
+    return `
+      <div class="room-card">
+        <div class="room-visual">${r.icon}</div>
+        <div class="room-body">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="margin:0; font-size:16px;">${safe(r.name)}</h3>
+              <span class="badge primary">Hardware</span>
+            </div>
+            <p style="font-size:12.5px; color:var(--ink-muted); margin:8px 0 0;">${safe(r.features)}</p>
+          </div>
+          <div>
+            <div style="font-size:11.5px; margin-bottom:8px; font-weight:700; color:${isBooked ? 'var(--danger)' : 'var(--success)'};">
+              ${isBooked ? '● In Use for selected slot' : '● In Stock & Ready'}
+            </div>
+            <button class="btn" style="width:100%;" ${isBooked ? 'disabled' : ''} onclick="bookResource('${r.id}')">
+              ${isBooked ? 'Resource Reserved' : 'Reserve Equipment'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function bookResource(resId) {
+  const date = $('resourceDate').value;
+  const start = $('resourceStart').value;
+  const end = $('resourceEnd').value;
+  const err = validateSlot(date, start, end);
+  if (err) { toast(err); return; }
+
+  if (hasConflict('resource', resId, date, start, end)) {
+    toast('Resource reserved for this time slot.');
+    return;
+  }
+
+  const res = resourceList.find(r => r.id === resId);
+  const booking = {
+    id: 'LS-' + Date.now().toString(36).toUpperCase(),
+    kind: 'resource',
+    item: res.name,
+    date,
+    start,
+    end,
+    status: 'confirmed',
+    user: db.profile.name || 'Student',
+    checkedIn: false
+  };
+
+  db.bookings.unshift(booking);
+  notice(`Resource reserved: ${res.name} on ${date}`);
+  persist();
+  toast('🎉 Equipment reserved!');
+  renderAll();
+  openDigitalPass(booking.id);
+}
+
+// My Bookings Table & Status Filter
+function setBookingStatusFilter(status, el) {
+  activeBookingStatusFilter = status;
+  document.querySelectorAll('#bookings .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderBookingsTable();
+}
+
+function renderBookingsTable() {
+  const search = ($('bookingSearchInput').value || '').trim().toLowerCase();
+
+  // Counts
+  const allCount = db.bookings.length;
+  const activeCount = db.bookings.filter(b => ['active', 'confirmed'].includes(getBookingStatus(b))).length;
+  const completedCount = db.bookings.filter(b => getBookingStatus(b) === 'completed').length;
+  const cancelledCount = db.bookings.filter(b => getBookingStatus(b) === 'cancelled').length;
+
+  $('bCountAll').textContent = allCount;
+  $('bCountActive').textContent = activeCount;
+  $('bCountCompleted').textContent = completedCount;
+  $('bCountCancelled').textContent = cancelledCount;
+
+  let filtered = db.bookings.filter(b => {
+    const st = getBookingStatus(b);
+    if (activeBookingStatusFilter === 'active' && !['active', 'confirmed'].includes(st)) return false;
+    if (activeBookingStatusFilter === 'completed' && st !== 'completed') return false;
+    if (activeBookingStatusFilter === 'cancelled' && st !== 'cancelled') return false;
+
+    if (search) {
+      const match = b.id.toLowerCase().includes(search) ||
+                    b.item.toLowerCase().includes(search) ||
+                    b.date.toLowerCase().includes(search);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  const tbody = $('bookingsTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center; padding:32px; color:var(--ink-muted);">
+          No bookings matching your criteria. Reserve a desk or room to get started!
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(b => {
+    const st = getBookingStatus(b);
+    let badgeClass = 'badge';
+    if (st === 'active') badgeClass = 'badge success';
+    else if (st === 'confirmed') badgeClass = 'badge primary';
+    else if (st === 'cancelled') badgeClass = 'badge danger';
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:700;">${safe(b.item)}</div>
+          <div style="font-size:11.5px; color:var(--ink-muted);">${b.id} · ${b.kind.toUpperCase()}</div>
+        </td>
+        <td>${b.date}</td>
+        <td>${b.start} – ${b.end}</td>
+        <td>
+          <span class="${badgeClass}">${st.toUpperCase()}${b.checkedIn ? ' · CHECKED IN' : ''}</span>
+        </td>
+        <td>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn alt small" onclick="openDigitalPass('${b.id}')">🎫 Pass</button>
+            ${['confirmed', 'active'].includes(st) ? `
+              <button class="btn secondary small" onclick="extendBooking('${b.id}')">⏱️ +30m</button>
+              ${!b.checkedIn ? `<button class="btn success small" onclick="checkInBooking('${b.id}')">Check In</button>` : ''}
+              <button class="btn danger small" onclick="cancelBooking('${b.id}')">Cancel</button>
+            ` : '—'}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function cancelBooking(id) {
+  const b = db.bookings.find(x => x.id === id);
+  if (!b) return;
+  if (!confirm(`Cancel reservation for ${b.item}?`)) return;
+  b.status = 'cancelled';
+  notice(`Reservation cancelled: ${b.item}`);
+  persist();
+  toast('Reservation cancelled');
+  renderAll();
+}
+
+function checkInBooking(id) {
+  const b = db.bookings.find(x => x.id === id);
+  if (!b) return;
+  b.checkedIn = true;
+  notice(`Checked in to ${b.item}`);
+  persist();
+  toast('✓ Checked in successfully!');
+  renderAll();
+}
+
+function extendBooking(id) {
+  const b = db.bookings.find(x => x.id === id);
+  if (!b) return;
+
+  const [eh, em] = b.end.split(':').map(Number);
+  const newMinutes = eh * 60 + em + 30;
+  const newEnd = `${String(Math.floor(newMinutes / 60)).padStart(2, '0')}:${String(newMinutes % 60).padStart(2, '0')}`;
+
+  if (newEnd > db.settings.close) {
+    toast(`Cannot extend past library closing time (${db.settings.close})`);
+    return;
+  }
+
+  // Check conflicts for the 30-min extension
+  if (hasConflict(b.kind, b.item, b.date, b.end, newEnd, b.id)) {
+    toast('Cannot extend: Space is reserved by another student right after your slot.');
+    return;
+  }
+
+  b.end = newEnd;
+  notice(`Extended booking for ${b.item} until ${newEnd}`);
+  persist();
+  toast(`🎉 Extended until ${newEnd}!`);
+  renderAll();
+}
+
+// Live Active Reservation Countdown Banner Ticker
+function updateLiveSessionTicker() {
+  const banner = $('liveSessionBanner');
+  const now = Date.now();
+
+  const activeBooking = db.bookings.find(b => {
+    if (b.status === 'cancelled') return false;
+    const start = new Date(`${b.date}T${b.start}`).getTime();
+    const end = new Date(`${b.date}T${b.end}`).getTime();
+    return start <= now && end > now;
+  });
+
+  if (activeBooking) {
+    banner.classList.add('active');
+    $('liveSessionItem').textContent = `${activeBooking.item} (${activeBooking.start} - ${activeBooking.end})`;
+
+    const endMs = new Date(`${activeBooking.date}T${activeBooking.end}`).getTime();
+    const diff = Math.max(0, endMs - now);
+
+    const h = Math.floor(diff / 36e5);
+    const m = Math.floor((diff % 36e5) / 6e4);
+    const s = Math.floor((diff % 6e4) / 1000);
+
+    $('liveCountdown').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  } else {
+    banner.classList.remove('active');
+  }
+}
+
+function openActivePass() {
+  const now = Date.now();
+  const activeBooking = db.bookings.find(b => {
+    if (b.status === 'cancelled') return false;
+    const start = new Date(`${b.date}T${b.start}`).getTime();
+    const end = new Date(`${b.date}T${b.end}`).getTime();
+    return start <= now && end > now;
+  });
+  if (activeBooking) {
+    openDigitalPass(activeBooking.id);
+  }
+}
+
+function extendActiveBooking() {
+  const now = Date.now();
+  const activeBooking = db.bookings.find(b => {
+    if (b.status === 'cancelled') return false;
+    const start = new Date(`${b.date}T${b.start}`).getTime();
+    const end = new Date(`${b.date}T${b.end}`).getTime();
+    return start <= now && end > now;
+  });
+  if (activeBooking) {
+    extendBooking(activeBooking.id);
+  }
+}
+
+function endActiveBookingEarly() {
+  const now = Date.now();
+  const activeBooking = db.bookings.find(b => {
+    if (b.status === 'cancelled') return false;
+    const start = new Date(`${b.date}T${b.start}`).getTime();
+    const end = new Date(`${b.date}T${b.end}`).getTime();
+    return start <= now && end > now;
+  });
+  if (!activeBooking) return;
+  if (!confirm('Check out and release your desk early?')) return;
+  
+  const d = new Date();
+  activeBooking.end = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  activeBooking.status = 'completed';
+  notice(`Checked out early from ${activeBooking.item}`);
+  persist();
+  toast('Checked out. Desk released for other students.');
+  renderAll();
+}
+
+// Dashboard Components
+function renderDashboard() {
+  const activeBookings = db.bookings.filter(b => ['active', 'confirmed'].includes(getBookingStatus(b)));
+  
+  const stats = [
+    { label: 'Active Reservations', val: activeBookings.length, icon: '📅', color: '#4f46e5' },
+    { label: 'Saved Favorites', val: db.favorites.length, icon: '♡', color: '#ec4899' },
+    { label: 'Study Rooms', val: roomList.length, icon: '🚪', color: '#06b6d4' },
+    { label: 'Hardware Resources', val: resourceList.length, icon: '💻', color: '#10b981' }
+  ];
+
+  $('dashboardStats').innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-icon" style="background:${s.color}15; color:${s.color}">${s.icon}</div>
+      <div>
+        <div class="stat-value">${s.val}</div>
+        <div class="stat-label">${s.label}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Upcoming Bookings list
+  const upcomingWrap = $('dashboardUpcoming');
+  if (activeBookings.length) {
+    upcomingWrap.innerHTML = activeBookings.slice(0, 4).map(b => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid var(--border); border-radius:12px;">
+        <div>
+          <div style="font-weight:700;">${safe(b.item)}</div>
+          <div style="font-size:12px; color:var(--ink-muted);">${b.date} · ${b.start}–${b.end}</div>
+        </div>
+        <button class="btn alt small" onclick="openDigitalPass('${b.id}')">🎫 Pass</button>
+      </div>
+    `).join('');
+  } else {
+    upcomingWrap.innerHTML = `
+      <div style="text-align:center; padding:24px; color:var(--ink-muted); font-size:13px;">
+        No active reservations right now. Ready to study?
+        <div style="margin-top:10px;">
+          <button class="btn small" onclick="showPage('seats')">Book a Desk</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Dashboard Floor Radar
+  const floors = [
+    { num: 1, name: 'Floor 1 · Quiet Reading', noise: '26 dB', free: 28 },
+    { num: 2, name: 'Floor 2 · Tech Commons', noise: '52 dB', free: 19 },
+    { num: 3, name: 'Floor 3 · Silent Research', noise: '22 dB', free: 34 }
+  ];
+
+  $('dashboardFloorRadar').innerHTML = floors.map(f => `
+    <div style="padding:10px 14px; background:var(--card-muted); border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-weight:700; font-size:13px;">${f.name}</div>
+        <div style="font-size:11.5px; color:var(--ink-muted);">Noise: ${f.noise}</div>
+      </div>
+      <button class="btn alt small" onclick="jumpToFloor(${f.num})">View ${f.free} Desks</button>
+    </div>
+  `).join('');
+}
+
+function jumpToFloor(f) {
+  $('seatFloor').value = String(f);
+  showPage('seats');
+}
+
+function smartFindSeat(zone) {
+  $('seatZone').value = zone;
+  showPage('seats');
+  smartRecommendBestSeat();
+}
+
+// Calendar View
+function renderCalendar() {
+  const val = $('calendarMonth').value || today().slice(0, 7);
+  const [year, month] = val.split('-').map(Number);
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const totalDays = new Date(year, month, 0).getDate();
+
+  let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-head">${d}</div>`).join('');
+
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div></div>';
+  }
+
+  for (let d = 1; d <= totalDays; d++) {
+    const dStr = `${val}-${String(d).padStart(2, '0')}`;
+    const count = db.bookings.filter(b => b.date === dStr && b.status !== 'cancelled').length;
+    html += `
+      <div class="cal-day ${count ? 'active-day' : ''}">
+        <strong>${d}</strong>
+        ${count ? `<span class="badge primary">${count} booking${count > 1 ? 's' : ''}</span>` : ''}
+      </div>
+    `;
+  }
+  $('calendarGridWrap').innerHTML = html;
+}
+
+// Favorites View
+function renderFavorites() {
+  const container = $('favoritesList');
+  $('favCountBadge').textContent = `${db.favorites.length} saved`;
+
+  if (!db.favorites.length) {
+    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--ink-muted);">No favorite desks saved yet. Select a desk in Seating and tap "♡ Favorite".</div>`;
+    return;
+  }
+
+  container.innerHTML = db.favorites.map(id => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; border:1px solid var(--border); border-radius:12px;">
+      <div>
+        <div style="font-weight:800; font-size:15px;">🪑 ${id}</div>
+        <div style="font-size:12px; color:var(--ink-muted);">Floor ${id[1]} · Library Desk</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn secondary small" onclick="jumpToFavoriteSeat('${id}')">Book Desk</button>
+        <button class="btn alt small" onclick="removeFavoriteSeat('${id}')">Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function jumpToFavoriteSeat(id) {
+  const m = id.match(/^F(\d)-([QCK])-/);
+  if (m) {
+    $('seatFloor').value = m[1];
+    $('seatZone').value = m[2] === 'Q' ? 'Quiet' : (m[2] === 'C' ? 'Collaborative' : 'Computer');
+  }
+  showPage('seats');
+  selectedSeat = id;
+  drawSeats();
+}
+
+function removeFavoriteSeat(id) {
+  db.favorites = db.favorites.filter(x => x !== id);
+  persist();
+  renderFavorites();
+  renderSidebarNav();
+  toast(`Removed ${id} from favorites`);
+}
+
+// Notifications
+function renderNotifications() {
+  const container = $('notificationsList');
+  if (!db.notices.length) {
+    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--ink-muted);">No new notifications.</div>`;
+    return;
+  }
+
+  container.innerHTML = db.notices.map(n => `
+    <div style="padding:14px; background:var(--card-muted); border-radius:12px; border-left:4px solid var(--primary);">
+      <div style="font-weight:600; font-size:13.5px;">${safe(n.text)}</div>
+      <div style="font-size:11px; color:var(--ink-muted); margin-top:4px;">${new Date(n.at).toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+function clearAllNotifications() {
+  db.notices = [];
+  persist();
+  renderNotifications();
+  updateNoticeBadge();
+  toast('Notifications cleared');
+}
+
+// Admin Dashboard
+
+function renderAdminAnalyticsChart() {
+  const container = $('adminChartBars');
+  if (!container) return;
+
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dailyCounts = [];
+  const labels = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const count = db.bookings.filter(b => b.date === dStr && b.status !== 'cancelled').length;
+    dailyCounts.push(count);
+    labels.push(i === 0 ? 'Today' : days[d.getDay()]);
+  }
+
+  const maxVal = Math.max(4, ...dailyCounts);
+
+  container.innerHTML = dailyCounts.map((val, idx) => {
+    const pct = Math.max(10, Math.round((val / maxVal) * 100));
+    return `
+      <div class="chart-bar-col">
+        <span class="chart-val-bubble">${val}</span>
+        <div class="chart-bar-fill" style="height:${pct}%;" title="${val} reservations on ${labels[idx]}"></div>
+        <span class="chart-day-label">${labels[idx]}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAdmin() {
+  renderAdminAnalyticsChart();
+  const total = db.bookings.length;
+  const active = db.bookings.filter(b => ['active', 'confirmed'].includes(getBookingStatus(b))).length;
+  const cancelled = db.bookings.filter(b => getBookingStatus(b) === 'cancelled').length;
+  const reports = db.reports.length;
+
+  $('adminStatsGrid').innerHTML = [
+    { label: 'Total Reservations', val: total, color: '#4f46e5' },
+    { label: 'Active Sessions', val: active, color: '#10b981' },
+    { label: 'Cancellations', val: cancelled, color: '#ef4444' },
+    { label: 'Facility Reports', val: reports, color: '#f59e0b' }
+  ].map(s => `
+    <div class="stat-card">
+      <div class="stat-icon" style="background:${s.color}15; color:${s.color}">📊</div>
+      <div>
+        <div class="stat-value">${s.val}</div>
+        <div class="stat-label">${s.label}</div>
+      </div>
+    </div>
+  `).join('');
+
+  $('adminOpenTime').value = db.settings.open;
+  $('adminCloseTime').value = db.settings.close;
+  $('adminMaxHours').value = db.settings.max;
+
+  // Admin Bookings Body
+  const tbody = $('adminBookingsBody');
+  tbody.innerHTML = db.bookings.length ? db.bookings.map(b => `
+    <tr>
+      <td><strong>${safe(b.user)}</strong></td>
+      <td>${safe(b.item)}</td>
+      <td>${b.date}</td>
+      <td>${b.start}–${b.end}</td>
+      <td><span class="badge">${getBookingStatus(b).toUpperCase()}</span></td>
+      <td>
+        <button class="btn alt small" onclick="adminCancelBooking('${b.id}')" ${['cancelled', 'completed'].includes(getBookingStatus(b)) ? 'disabled' : ''}>
+          Revoke
+        </button>
+      </td>
+    </tr>
+  `).join('') : '<tr><td colspan="6" style="text-align:center; padding:20px;">No bookings in system.</td></tr>';
+
+  // Admin Reports
+  const rContainer = $('adminReportsList');
+  rContainer.innerHTML = db.reports.length ? db.reports.map(r => `
+    <div style="padding:10px 14px; background:var(--card-muted); border-radius:10px;">
+      <div style="font-weight:700; font-size:13px;">${safe(r.type)}</div>
+      <div style="font-size:12px; margin:4px 0;">${safe(r.text)}</div>
+      <div style="font-size:11px; color:var(--ink-muted);">By ${safe(r.user)} · ${new Date(r.at).toLocaleDateString()}</div>
+    </div>
+  `).join('') : '<div style="color:var(--ink-muted); font-size:13px;">No maintenance reports filed.</div>';
+}
+
+function adminCancelBooking(id) {
+  const b = db.bookings.find(x => x.id === id);
+  if (!b) return;
+  b.status = 'cancelled';
+  notice(`[ADMIN OVERRIDE] Booking for ${b.item} was revoked by library staff`);
+  persist();
+  renderAll();
+  toast('Reservation revoked by administrator');
+}
+
+function saveAdminSettings() {
+  const open = $('adminOpenTime').value;
+  const close = $('adminCloseTime').value;
+  const max = Number($('adminMaxHours').value);
+
+  if (open >= close || max < 1 || max > 12) {
+    toast('Invalid operating hours or max duration (1–12 hours).');
+    return;
+  }
+
+  db.settings = { open, close, max };
+  persist();
+  toast('Admin library settings saved successfully');
+}
+
+function switchDemoRole() {
+  db.profile.role = $('profileRole').value;
+  persist();
+  renderSidebarNav();
+  toast(`Switched role to: ${db.profile.role.toUpperCase()}`);
+}
+
+// Export All Bookings to CSV
+function downloadCSV() {
+  if (!db.bookings.length) {
+    toast('No bookings to export.');
+    return;
+  }
+  const headers = ['Booking ID', 'Type', 'Item / Desk', 'Date', 'Start Time', 'End Time', 'Status', 'User'];
+  const rows = db.bookings.map(b => [
+    b.id,
+    b.kind,
+    b.item,
+    b.date,
+    b.start,
+    b.end,
+    getBookingStatus(b),
+    b.user || ''
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `libspace-bookings-${today()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📥 Bookings CSV exported successfully');
+}
+
+// Export All Bookings to iCalendar (.ics)
+function exportBookingsICS() {
+  const valid = db.bookings.filter(b => b.status !== 'cancelled');
+  if (!valid.length) {
+    toast('No upcoming or completed bookings to export.');
+    return;
+  }
+
+  let ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//LibSpace//Campus Smart Library//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH'
+  ];
+
+  valid.forEach(b => {
+    const startISO = b.date.replace(/-/g, '') + 'T' + b.start.replace(/:/g, '') + '00';
+    const endISO = b.date.replace(/-/g, '') + 'T' + b.end.replace(/:/g, '') + '00';
+    ics.push(
+      'BEGIN:VEVENT',
+      `UID:${b.id}@libspace.campus`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+      `DTSTART:${startISO}`,
+      `DTEND:${endISO}`,
+      `SUMMARY:LibSpace Study: ${b.item}`,
+      `DESCRIPTION:Verified reservation for ${b.kind} ${b.item}. Pass ID: ${b.id}`,
+      'LOCATION:Campus Central Library',
+      'STATUS:CONFIRMED',
+      'END:VEVENT'
+    );
+  });
+
+  ics.push('END:VCALENDAR');
+
+  const blob = new Blob([ics.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `libspace-all-bookings-${today()}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📅 All bookings exported as calendar .ics file');
+}
+
+// Render Master Coordinator
+function renderCurrentPage() {
+  if (currentPage === 'dashboard') renderDashboard();
+  else if (currentPage === 'seats') drawSeats();
+  else if (currentPage === 'rooms') renderRooms();
+  else if (currentPage === 'resources') renderResources();
+  else if (currentPage === 'bookings') renderBookingsTable();
+  else if (currentPage === 'calendar') renderCalendar();
+  else if (currentPage === 'favorites') renderFavorites();
+  else if (currentPage === 'notifications') renderNotifications();
+  else if (currentPage === 'admin') renderAdmin();
+  updateLiveSessionTicker();
+}
+
+function renderAll() {
+  renderSidebarNav();
+  renderCurrentPage();
+  updateLiveSessionTicker();
+}
+
+// Initial Events & Form Handlers
+$('feedbackForm').onsubmit = e => {
+  e.preventDefault();
+  const type = $('issueType').value;
+  const text = $('issueDetails').value.trim();
+  db.reports.unshift({ type, text, user: db.profile.name, at: new Date().toISOString() });
+  notice(`Maintenance report filed: ${type}`);
+  persist();
+  $('issueDetails').value = '';
+  toast('Thank you! Your report has been submitted to library staff.');
+};
+
+$('profileForm').onsubmit = e => {
+  e.preventDefault();
+  db.profile.name = $('profileName').value.trim();
+  db.profile.reg = $('profileReg').value.trim();
+  db.profile.email = $('profileEmail').value.trim();
+  db.profile.role = $('profileRole').value;
+  persist();
+  toast('Profile updated successfully');
+  renderAll();
+};
+
+
+// ==========================================
+// 2D Interactive Canvas Floor Plan Engine
+// ==========================================
+let floorViewMode = 'map'; // 'map' or 'grid'
+let mapScale = 1.0;
+let mapOffsetX = 0;
+let mapOffsetY = 0;
+let hoveredDeskNum = null;
+
+// Layout coordinates for 40 desks on 900x520 architectural canvas
+const deskMapCoords = {};
+(function initDeskCoordinates() {
+  // Pod A: Desks 1-10 (Top Left)
+  // Row 1: 1..5, Row 2: 6..10
+  for (let i = 0; i < 5; i++) {
+    deskMapCoords[1 + i] = { x: 120 + i * 50, y: 120, w: 42, h: 32, label: String(1 + i).padStart(2,'0'), pod: 'Pod A' };
+    deskMapCoords[6 + i] = { x: 120 + i * 50, y: 165, w: 42, h: 32, label: String(6 + i).padStart(2,'0'), pod: 'Pod A' };
+  }
+  // Pod B: Desks 11-20 (Top Right)
+  // Row 1: 11..15, Row 2: 16..20
+  for (let i = 0; i < 5; i++) {
+    deskMapCoords[11 + i] = { x: 420 + i * 50, y: 120, w: 42, h: 32, label: String(11 + i).padStart(2,'0'), pod: 'Pod B' };
+    deskMapCoords[16 + i] = { x: 420 + i * 50, y: 165, w: 42, h: 32, label: String(16 + i).padStart(2,'0'), pod: 'Pod B' };
+  }
+  // Pod C: Desks 21-30 (Bottom Left)
+  // Row 1: 21..25, Row 2: 26..30
+  for (let i = 0; i < 5; i++) {
+    deskMapCoords[21 + i] = { x: 120 + i * 50, y: 280, w: 42, h: 32, label: String(21 + i).padStart(2,'0'), pod: 'Pod C' };
+    deskMapCoords[26 + i] = { x: 120 + i * 50, y: 325, w: 42, h: 32, label: String(26 + i).padStart(2,'0'), pod: 'Pod C' };
+  }
+  // Pod D: Desks 31-40 (Bottom Right)
+  // Row 1: 31..35, Row 2: 36..40
+  for (let i = 0; i < 5; i++) {
+    deskMapCoords[31 + i] = { x: 420 + i * 50, y: 280, w: 42, h: 32, label: String(31 + i).padStart(2,'0'), pod: 'Pod D' };
+    deskMapCoords[36 + i] = { x: 420 + i * 50, y: 325, w: 42, h: 32, label: String(36 + i).padStart(2,'0'), pod: 'Pod D' };
+  }
+})();
+
+function setFloorViewMode(mode) {
+  floorViewMode = mode;
+  $('viewModeMapBtn').className = mode === 'map' ? 'btn small' : 'btn small alt';
+  $('viewModeGridBtn').className = mode === 'grid' ? 'btn small' : 'btn small alt';
+  $('floorCanvasWrap').style.display = mode === 'map' ? 'flex' : 'none';
+  $('mapControls').style.display = mode === 'map' ? 'flex' : 'none';
+  document.querySelector('.seat-plan').style.display = mode === 'grid' ? 'block' : 'none';
+  if (mode === 'map') {
+    renderFloorPlanCanvas();
+  }
+}
+
+function zoomMap(delta) {
+  mapScale = Math.min(2.0, Math.max(0.7, mapScale + delta));
+  renderFloorPlanCanvas();
+}
+
+function resetMapZoom() {
+  mapScale = 1.0;
+  mapOffsetX = 0;
+  mapOffsetY = 0;
+  renderFloorPlanCanvas();
+}
+
+function renderFloorPlanCanvas() {
+  const canvas = $('floorCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const isDark = document.body.classList.contains('dark');
+
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.save();
+
+  // Apply Pan & Zoom
+  ctx.translate(width / 2 + mapOffsetX, height / 2 + mapOffsetY);
+  ctx.scale(mapScale, mapScale);
+  ctx.translate(-width / 2, -height / 2);
+
+  // Background grid
+  ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < width; x += 30) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+  }
+  for (let y = 0; y < height; y += 30) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+  }
+
+  // Outer Architectural Walls
+  ctx.strokeStyle = isDark ? '#334155' : '#cbd5e1';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(30, 30, width - 60, height - 60);
+
+  // Top Glass Window Wall with Sunlight Rays
+  ctx.fillStyle = isDark ? 'rgba(56, 189, 248, 0.12)' : 'rgba(56, 189, 248, 0.18)';
+  ctx.fillRect(32, 32, width - 64, 18);
+  ctx.fillStyle = isDark ? '#38bdf8' : '#0284c7';
+  ctx.font = 'bold 11px system-ui';
+  ctx.fillText('🪟 PANORAMIC GLASS WINDOW WALL (NATURAL DAYLIGHT)', 240, 45);
+
+  // Bookshelves on the Right Wing
+  ctx.fillStyle = isDark ? '#1e293b' : '#e2e8f0';
+  ctx.strokeStyle = isDark ? '#475569' : '#94a3b8';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 4; i++) {
+    const sy = 100 + i * 85;
+    ctx.fillRect(720, sy, 120, 48);
+    ctx.strokeRect(720, sy, 120, 48);
+    ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+    ctx.font = '10px system-ui';
+    ctx.fillText(`📚 BOOK STACKS 0${i+1}`, 732, sy + 28);
+    ctx.fillStyle = isDark ? '#1e293b' : '#e2e8f0';
+  }
+
+  // Bottom Center: Information Desk & Turnstiles
+  ctx.fillStyle = isDark ? '#312e81' : '#e0e7ff';
+  ctx.fillRect(320, 430, 200, 40);
+  ctx.strokeStyle = isDark ? '#6366f1' : '#4f46e5';
+  ctx.strokeRect(320, 430, 200, 40);
+  ctx.fillStyle = isDark ? '#c7d2fe' : '#3730a3';
+  ctx.font = 'bold 11.5px system-ui';
+  ctx.fillText('ℹ️ LIBRARIAN & SERVICE DESK', 345, 455);
+
+  // Entrance Gates (Bottom Left)
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(90, 450, 100, 24);
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 10px system-ui';
+  ctx.fillText('🚪 ENTRY GATES', 105, 466);
+
+  // Zone Labeling Watermark
+  const floor = $('seatFloor') ? $('seatFloor').value : '1';
+  const zone = $('seatZone') ? $('seatZone').value : 'Quiet';
+  ctx.fillStyle = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+  ctx.font = '800 36px system-ui';
+  ctx.fillText(`FLOOR ${floor} · ${zone.toUpperCase()} ZONE`, 120, 85);
+
+  // Pod Boundaries & Center Cable Trays
+  const podLabels = [
+    { title: 'POD A · QUIET NOOK', x: 105, y: 105, w: 265, h: 105 },
+    { title: 'POD B · POWER DESKS', x: 405, y: 105, w: 265, h: 105 },
+    { title: 'POD C · STUDY COVE', x: 105, y: 265, w: 265, h: 105 },
+    { title: 'POD D · TECH WORKSPACES', x: 405, y: 265, w: 265, h: 105 }
+  ];
+
+  podLabels.forEach(p => {
+    ctx.strokeStyle = isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(79, 70, 229, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+    ctx.setLineDash([]);
+    ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+    ctx.font = 'bold 9.5px system-ui';
+    ctx.fillText(p.title, p.x + 8, p.y - 4);
+
+    // Center divider / power trunk
+    ctx.fillStyle = isDark ? '#1e293b' : '#cbd5e1';
+    ctx.fillRect(p.x + 10, p.y + 49, p.w - 20, 6);
+  });
+
+  // Render Desks (1..40)
+  const date = $('seatDate') ? $('seatDate').value : today();
+  const start = $('seatStart') ? $('seatStart').value : '10:00';
+  const end = $('seatEnd') ? $('seatEnd').value : '12:00';
+
+  for (let n = 1; n <= 40; n++) {
+    const d = deskMapCoords[n];
+    if (!d) continue;
+
+    const id = makeSeatId(floor, zone, n);
+    const attrs = getSeatAttributes(n);
+    const isOccupied = hasConflict('seat', id, date, start, end);
+    const isMine = db.bookings.some(b => b.kind === 'seat' && b.item === id && b.date === date && getBookingStatus(b) === 'active');
+    const isSelected = selectedSeat === id;
+    const isHovered = hoveredDeskNum === n;
+
+    // Filter dimming
+    let isDimmed = false;
+    if (activeFeatureFilter === 'power' && !attrs.power) isDimmed = true;
+    if (activeFeatureFilter === 'window' && !attrs.window) isDimmed = true;
+    if (activeFeatureFilter === 'accessible' && !attrs.accessible) isDimmed = true;
+    if (activeFeatureFilter === 'computer' && !attrs.computer) isDimmed = true;
+
+    // Fill Colors
+    if (isSelected) {
+      ctx.fillStyle = '#4f46e5';
+      ctx.strokeStyle = '#ffffff';
+    } else if (isMine) {
+      ctx.fillStyle = '#f59e0b';
+      ctx.strokeStyle = '#d97706';
+    } else if (isOccupied) {
+      ctx.fillStyle = isDark ? '#7f1d1d' : '#fecaca';
+      ctx.strokeStyle = '#ef4444';
+    } else {
+      ctx.fillStyle = isDark ? '#064e3b' : '#d1fae5';
+      ctx.strokeStyle = '#10b981';
+    }
+
+    ctx.globalAlpha = isDimmed ? 0.25 : 1.0;
+    ctx.lineWidth = isSelected ? 2.5 : 1.5;
+
+    // Draw Desk Rounded Rectangle
+    roundRect(ctx, d.x, d.y, d.w, d.h, 6, true, true);
+
+    // Hover Highlight Glow
+    if (isHovered && !isOccupied) {
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2.5;
+      roundRect(ctx, d.x - 2, d.y - 2, d.w + 4, d.h + 4, 8, false, true);
+    }
+
+    // Chair Icon Circle behind desk
+    ctx.fillStyle = isDark ? '#334155' : '#94a3b8';
+    ctx.beginPath();
+    const chairY = d.y < 200 || (d.y > 250 && d.y < 300) ? d.y - 6 : d.y + d.h + 6;
+    ctx.arc(d.x + d.w / 2, chairY, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Desk Label & Amenity Icon
+    ctx.fillStyle = isSelected ? '#ffffff' : (isOccupied ? (isDark ? '#fca5a5' : '#991b1b') : (isDark ? '#6ee7b7' : '#065f46'));
+    ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(d.label, d.x + d.w / 2, d.y + d.h / 2 - 2);
+
+    // Amenity glyph
+    ctx.font = '9px system-ui';
+    let glyph = '';
+    if (attrs.power) glyph = '⚡';
+    else if (attrs.window) glyph = '🪟';
+    else if (attrs.computer) glyph = '🖥️';
+    if (glyph) {
+      ctx.fillText(glyph, d.x + d.w / 2, d.y + d.h / 2 + 8);
+    }
+
+    ctx.globalAlpha = 1.0;
+  }
+
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+// Canvas Mouse Interactions (Hover Tooltip & Click Selection)
+(function setupCanvasEvents() {
+  const canvas = $('floorCanvas');
+  const tooltip = $('canvasTooltip');
+  if (!canvas) return;
+
+  function getCanvasDeskAtPoint(mx, my) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    // Convert mouse to transformed canvas space
+    let cx = (mx - rect.left) * scaleX;
+    let cy = (my - rect.top) * scaleY;
+
+    cx = (cx - canvas.width / 2 - mapOffsetX) / mapScale + canvas.width / 2;
+    cy = (cy - canvas.height / 2 - mapOffsetY) / mapScale + canvas.height / 2;
+
+    for (let n = 1; n <= 40; n++) {
+      const d = deskMapCoords[n];
+      if (cx >= d.x && cx <= d.x + d.w && cy >= d.y && cy <= d.y + d.h) {
+        return n;
+      }
+    }
+    return null;
+  }
+
+  canvas.addEventListener('mousemove', e => {
+    const deskNum = getCanvasDeskAtPoint(e.clientX, e.clientY);
+    hoveredDeskNum = deskNum;
+
+    if (deskNum) {
+      const floor = $('seatFloor').value;
+      const zone = $('seatZone').value;
+      const date = $('seatDate').value;
+      const start = $('seatStart').value;
+      const end = $('seatEnd').value;
+      const id = makeSeatId(floor, zone, deskNum);
+      const attrs = getSeatAttributes(deskNum);
+      const isOccupied = hasConflict('seat', id, date, start, end);
+
+      canvas.style.cursor = isOccupied ? 'not-allowed' : 'pointer';
+
+      let feat = [];
+      if (attrs.power) feat.push('⚡ Power');
+      if (attrs.window) feat.push('🪟 Window');
+      if (attrs.accessible) feat.push('♿ Accessible');
+      if (attrs.computer) feat.push('🖥️ Workstation');
+
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.pageX + 15) + 'px';
+      tooltip.style.top = (e.pageY + 15) + 'px';
+      tooltip.innerHTML = `
+        <div><strong>Desk ${id}</strong> (${isOccupied ? 'Reserved' : 'Available'})</div>
+        <div style="font-size:11px; opacity:0.85; margin-top:2px;">${feat.join(' · ') || 'Standard Desk'}</div>
+        <div style="font-size:10px; color:${isOccupied ? '#fca5a5' : '#86efac'}; margin-top:3px;">
+          ${isOccupied ? '● Cannot be selected' : '⚡ Click to select & book'}
+        </div>
+      `;
+    } else {
+      canvas.style.cursor = 'default';
+      tooltip.style.display = 'none';
+    }
+
+    renderFloorPlanCanvas();
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    hoveredDeskNum = null;
+    tooltip.style.display = 'none';
+    renderFloorPlanCanvas();
+  });
+
+  
+  // Mobile / Tablet Touch Events
+  canvas.addEventListener('touchstart', e => {
+    if (!e.touches.length) return;
+    const touch = e.touches[0];
+    const deskNum = getCanvasDeskAtPoint(touch.clientX, touch.clientY);
+    if (!deskNum) return;
+
+    e.preventDefault();
+    const floor = $('seatFloor').value;
+    const zone = $('seatZone').value;
+    const date = $('seatDate').value;
+    const start = $('seatStart').value;
+    const end = $('seatEnd').value;
+    const id = makeSeatId(floor, zone, deskNum);
+
+    if (hasConflict('seat', id, date, start, end)) {
+      toast(`Desk ${id} is occupied for this slot.`);
+      return;
+    }
+
+    selectedSeat = id;
+    const attrs = getSeatAttributes(deskNum);
+    document.querySelectorAll('.seat-btn').forEach(btn => {
+      btn.classList.toggle('selected', btn.title.startsWith(id));
+    });
+
+    updateSelectedSeatDrawer(id, attrs);
+    renderFloorPlanCanvas();
+    toast(`Selected desk ${id}`);
+  }, { passive: false });
+
+  canvas.addEventListener('click', e => {
+    const deskNum = getCanvasDeskAtPoint(e.clientX, e.clientY);
+    if (!deskNum) return;
+
+    const floor = $('seatFloor').value;
+    const zone = $('seatZone').value;
+    const date = $('seatDate').value;
+    const start = $('seatStart').value;
+    const end = $('seatEnd').value;
+    const id = makeSeatId(floor, zone, deskNum);
+
+    if (hasConflict('seat', id, date, start, end)) {
+      toast(`Desk ${id} is occupied for this time slot.`);
+      return;
+    }
+
+    selectedSeat = id;
+    const attrs = getSeatAttributes(deskNum);
+
+    // Sync with grid view buttons
+    document.querySelectorAll('.seat-btn').forEach(btn => {
+      btn.classList.toggle('selected', btn.title.startsWith(id));
+    });
+
+    updateSelectedSeatDrawer(id, attrs);
+    renderFloorPlanCanvas();
+    toast(`Selected desk ${id}`);
+  });
+})();
+
+// Initial Setup
+window.addEventListener('DOMContentLoaded', () => {
+  const t = today();
+  $('seatDate').value = t;
+  $('seatDate').min = t;
+  $('roomDate').value = t;
+  $('roomDate').min = t;
+  $('resourceDate').value = t;
+  $('resourceDate').min = t;
+  $('calendarMonth').value = t.slice(0, 7);
+
+  $('profileName').value = db.profile.name || 'Student';
+  $('profileReg').value = db.profile.reg || 'CSE326-DEMO';
+  $('profileEmail').value = db.profile.email || 'student@example.com';
+  $('profileRole').value = db.profile.role || 'student';
+
+  renderAll();
+  // Live ticker loop
+  setInterval(updateLiveSessionTicker, 1000);
+});
+</script>
+</body>
+</html>
